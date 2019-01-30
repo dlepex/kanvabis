@@ -7,14 +7,14 @@ import Two from 'two'
 import { Events, Shape } from 'two'
 
 import { filterViewCast } from "commons/collections";
-import { Vec2 } from "math/vec2"
-import * as vec from "math/vec2"
+import { vec2 } from "math/vec2"
+import * as Vec from "math/vec2"
 import { EachWithEach } from "phys/detector";
 
 
 class TheBody implements CollidingBody {
 	id = 0
-	collideSize: vec.Vec2Immut
+	collideSize: Vec.vec2
 	collide: CollideProps
 	phys: PhysProps
 	shape: Shape
@@ -36,7 +36,7 @@ class TheBody implements CollidingBody {
 		this.collide = new CollideProps(this)
 		this.phys = new PointMass({
 			coords: w.rngCoords(),
-			vel: vec.scaleBy(vec.setRand1(w.rng, vec.create()), 2),
+			vel: Vec.scaleBy(Vec.setRand1(w.rng, Vec.create()), 2),
 			mass: r * r / 80
 		})
 	}
@@ -139,19 +139,16 @@ function vanDerVaals(rng: Random): InteractFn {
 	}
 }
 
-const distVec = vec.create()
+const distVec = Vec.create()
 function impulseCollide(rng: Random): InteractFn {
 	const r = brect.create()
 	const mf = new MutualForce(rng)
 	const collide = new ElasticCollideCalc(rng)
 	return function (a: TheBody, b: TheBody) {
 		const ok = brect.intersect(a.collide.box, b.collide.box, r)
-		if (!ok) {
-			console.log("rects do not intersect", a.collide.box, b.collide.box)
-			return
-		}
-		vec.subtract(distVec, a.phys.coords, b.phys.coords)
-		const d = (a.r + b.r) - vec.len(distVec)
+
+		Vec.subtract(distVec, a.phys.coords, b.phys.coords)
+		const d = (a.r + b.r) - Vec.len(distVec)
 
 		if (d < -0.2) {
 			return

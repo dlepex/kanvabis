@@ -7,11 +7,14 @@ import Two from 'two'
 import { Events, Shape } from 'two'
 
 import { newPerfTimer, newPerfTimerDisabled } from "commons/perftimer";
-import { Vec2 } from "math/vec2"
+import { vec2 } from "math/vec2"
 import * as vec from "math/vec2"
+import { loggers } from "commons/logger";
+
+const [trace, isTrace] = loggers().get()
 
 class RectBody implements CollidingBody {
-	collideSize: vec.Vec2Immut
+	collideSize: vec.vec2
 	collide: CollideProps
 	phys: PhysProps
 	shape: Shape
@@ -39,7 +42,7 @@ class RectBody implements CollidingBody {
 		this.shape = r
 		r.linewidth = rng.int(1, 2)
 		r.noStroke()
-		r.fill = rng.color()
+		r.fill = rng.colorRgb()
 	}
 
 	shapeUpdate(two: Two) {
@@ -98,8 +101,7 @@ export function runSceneCollide(two: Two, opts: {
 		}
 		tDraw.stop()
 		if (w.step % 10 === 0) {
-			tStep.printDuration()
-			tDraw.printDuration()
+			trace(tStep, tDraw)
 		}
 	}).play()
 }

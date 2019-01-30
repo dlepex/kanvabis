@@ -3140,7 +3140,7 @@ declare module 'gl-matrix/src/gl-matrix/common' {
 	export = glMatrix;
 }
 
-declare module 'gl-matrix/src/gl-matrix/vec2' {
+declare module  'gl-matrix/src/gl-matrix/vec2' {
 	import { vec2 } from 'gl-matrix';
 	export = vec2;
 }
