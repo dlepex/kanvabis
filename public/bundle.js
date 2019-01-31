@@ -566,6 +566,9 @@
       int(from, to) {
           return Math.floor(from + this.rfn() * (to - from));
       }
+      bool() {
+          return this.int(0, 2) === 0;
+      }
       colorRgb() {
           const f = this.rfn;
           return 'rgb(' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ')';
@@ -840,6 +843,7 @@
           return within(this.ids, this.coords, x, y, r, this.nodeSize, result);
       }
   }
+  //# sourceMappingURL=index.js.map
 
   var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -1465,11 +1469,11 @@
   class TheBody {
       constructor(w, radius) {
           this.id = 0;
-          this.red = false;
+          this.color = 0;
           this.isNew = false;
           this.w = w;
-          const r = radius ? radius : w.rng.int(2, 8);
-          this.red = r <= 5;
+          const r = radius ? radius : w.rng.int(3, 6);
+          this.color = w.rng.int(0, 3);
           // let r1 = w.rng.number(9, 15)
           this.r = r;
           this.collideSize = [r, r];
@@ -1487,10 +1491,17 @@
           this.shape = r;
           r.linewidth = rng.int(1, 2);
           r.noStroke();
-          if (!this.red)
-              r.fill = 'black';
-          else
-              r.fill = color(world.rng.number(0.85, 1), world.rng.number(0, 0.1), 0);
+          switch (this.color) {
+              case 0:
+                  r.fill = 'black';
+                  break;
+              case 1:
+                  r.fill = 'red';
+                  break;
+              case 2:
+                  r.fill = 'gray';
+                  break;
+          }
       }
       shapeUpdate(two) {
           if (!this.shape) {
@@ -1513,14 +1524,12 @@
       }
   }
   const collideSet = new Set();
-  let world;
   function runSceneProximal(two, opts) {
-      const N = 1500;
+      const N = 1800;
       const w = new World({
           size: [opts.w, opts.h]
       });
-      world = w;
-      w.massCoef = 0.2;
+      w.massCoef = 0.1;
       w.velModifier = VelMods.compose(VelMods.friction(0, 0.0001), VelMods.friction(1, 0.1));
       for (let i = 0; i < N; i++) {
           const b = new TheBody(w);
@@ -1536,7 +1545,7 @@
           interact: impulseCollide(w.rng)
       });
       w.addInteraction({
-          detect: new Proximity(20, nonCollidingBodies),
+          detect: new Proximity(23, nonCollidingBodies),
           interact: vanDerVaals(w.rng),
       });
       two.bind('update', () => {
@@ -1553,9 +1562,13 @@
   function vanDerVaals(rng) {
       const mf = new MutualForce(rng);
       return function (a, b) {
-          if (a.red !== b.red) {
-              mf.init(a, b);
-              mf.apply(-1); // -04
+          mf.init(a, b);
+          const d = mf.dist;
+          if (a.color !== b.color) {
+              mf.apply(-1.2); // -04
+          }
+          else if (d < 5) {
+              mf.apply(-0.015);
           }
       };
   }
@@ -1584,10 +1597,6 @@
           //g.add(a.id, b.id)
       };
   }
-  function color(r, g, b) {
-      return 'rgb(' + (Math.floor(r * 256)) + ',' + (Math.floor(g * 256)) + ',' + (Math.floor(b * 256)) + ')';
-  }
-  //# sourceMappingURL=proximal.js.map
 
   window.addEventListener('DOMContentLoaded', function () {
       draw();

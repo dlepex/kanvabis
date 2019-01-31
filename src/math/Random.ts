@@ -18,6 +18,10 @@ export class Random {
     return Math.floor(from + this.rfn() * (to - from))
   }
 
+  bool(): boolean {
+    return this.int(0, 2) === 0
+  }
+
   colorRgb(): string {
     const f = this.rfn
     return 'rgb(' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ')'

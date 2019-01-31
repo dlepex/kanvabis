@@ -174,7 +174,6 @@ export class ElasticCollideCalc {
     } else {
       n = vec.copy(this.n, n)
     }
-
     if (!vec.isZero(n)) vec.normalize(n, n)
     else vec.setRand1(this.rng, n)
     return n
