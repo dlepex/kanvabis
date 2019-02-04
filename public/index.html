@@ -1,26 +1,52 @@
+<!DOCTYPE html>
 <html>
 
 <head>
-	<style>
-		.scene>svg {
-			border: 0.1em ridge red;
-			padding: 4em
-		}
-	</style>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <meta http-equiv="Cache-control" content="no-cache">
+  <title>Kanvabis</title>
+  <style>
+    #sceneDrawingContainer>* {
+      border: 1px solid lightgray;
+    }
 
+    #sceneTitle {
+      font-size: 120%;
+      font-weight: bold;
+    }
+
+    #jsonEditor {
+      width: 600px;
+      height: 400px;
+    }
+
+    #settingsContainer {
+      margin-top: 1em
+    }
+  </style>
+  <link href="jsoneditor.min.css" rel="stylesheet" type="text/css">
+  <script src="jsoneditor.min.js"></script>
 </head>
 
-
-
 <body>
-	<h1>Test</h1>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.7.0-alpha.1/two.js"></script>
-	<script src="bundle.js"></script>
-
-	<section id="scene_1" class="scene">SECTION</section>
-	<div>
-		FPS= <span id="fps"></span>
-	</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.7.0-alpha.1/two.js"></script>
+  <script src="bundle.js"></script>
+  <div id="sceneContainer">
+    <div id="sceneTitle"></div>
+    <div><span id="sceneStatusLine"></span></div>
+    <div id="sceneDrawingContainer"></div>
+    <div id="sceneButtons">
+      <button type="button" id="genBtn">Generate</button>
+      <button type="button" id="copyBtn">Generate&Copy</button>
+      <button type="button" id="clearBtn">Clear</button>
+    </div>
+  </div>
+  <div id="settingsContainer">
+    <div><span style="margin-right:1em">Settings</span>
+      <button id="jsonMode">JSON mode</button>
+      <button id="jsonReload">Reload</button></div>
+    <div id="jsonEditor"></div>
+  </div>
 </body>
 
 </html>
