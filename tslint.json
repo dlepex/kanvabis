@@ -1,81 +1,91 @@
+// Implicit conventions:
+// 1. const is used only for globals
+// 2. TS `private` is not used, instead private class members are prefixed with undescore.
+// 3. truthy if or `x != null` is used instead of comparison (===) with `undefined`
+// 4. `return undefined` is used instead of `return null` to be compatible with TS question marks
 {
-	"extends": "tslint:recommended",
-	"rules": {
-		"curly": [
-			true,
-			"ignore-same-line"
-		],
-		"arrow-return-shorthand": [
-			true
-		],
-		"named-imports-order": "any",
-		"import-sources-order": "any",
-		"class-name": false,
-		"encoding": true,
-		"no-namespace": false,
-		"interface-name": [
-			false
-		],
-		"indent": [
-			true,
-			"tabs"
-		],
-		"semicolon": [
-			true,
-			"never"
-		],
-		"quotemark": [
-			true,
-			"single",
-		],
-		"trailing-comma": false,
-		"comment-format": false,
-		"interface-over-type-literal": false,
-		"max-classes-per-file": false,
-		"member-access": [
-			true,
-			"no-public"
-		],
-		"no-console": false,
-		"no-bitwise": false,
-		"no-boolean-literal-compare": true,
-		"no-duplicate-imports": false,
-		"no-empty-interface": false,
-		"no-for-in-array": true,
-		"no-inferrable-types": true,
-		"no-invalid-template-strings": true,
-		"no-return-await": true,
-		"no-string-throw": true,
-		"no-var-keyword": true,
-		"no-parameter-reassignment": true,
-		"object-literal-sort-keys": false,
-		"ordered-imports": [
-			true,
-			{
-				"grouped-imports": true,
-				"named-imports-order": "lowercase-last"
-			}
-		],
-		// Use const only for globals, const local variables does not help much if at all.
-		"prefer-const": true,
-		"prefer-for-of": false,
-		"prefer-object-spread": true,
-		"prefer-readonly": false,
-		"prettier": false,
-		"switch-default": true,
-		"variable-name": [
-			true,
-			"allow-leading-underscore",
-			"ban-keywords",
-			"check-format",
-			"allow-pascal-case"
-		],
-		"max-line-length": [
-			true,
-			{
-				"limit": 120,
-				"ignore-pattern": "^import |^export {(.*?)}"
-			}
-		]
-	}
+  "extends": "tslint:recommended",
+  "rules": {
+    "curly": [
+      true,
+      "ignore-same-line"
+    ],
+    "arrow-return-shorthand": [
+      true
+    ],
+    "named-imports-order": "any",
+    "import-sources-order": "any",
+    "class-name": false,
+    "encoding": true,
+    "no-namespace": false,
+    "interface-name": [
+      false
+    ],
+    "triple-equals": [
+      true,
+      "allow-null-check"
+    ],
+    "indent": [
+      true,
+      "spaces"
+    ],
+    "semicolon": [
+      true,
+      "never"
+    ],
+    "arrow-parens": false,
+    "quotemark": false,
+    "jsdoc-format": false,
+    "trailing-comma": false,
+    "comment-format": false,
+    "interface-over-type-literal": false,
+    "max-classes-per-file": false,
+    "no-empty": false,
+    "align": false,
+    "member-access": [
+      true,
+      "no-public"
+    ],
+    "no-console": false,
+    "no-bitwise": false,
+    "no-boolean-literal-compare": true,
+    "no-duplicate-imports": false,
+    "one-variable-per-declaration": false,
+    "no-empty-interface": false,
+    "no-for-in-array": true,
+    "no-inferrable-types": true,
+    "no-invalid-template-strings": true,
+    "no-return-await": true,
+    "no-string-throw": true,
+    "no-var-keyword": true,
+    "no-parameter-reassignment": true,
+    "object-literal-sort-keys": false,
+    "ordered-imports": [
+      true,
+      {
+        "grouped-imports": true,
+        "named-imports-order": "lowercase-last"
+      }
+    ],
+    "prefer-const": false,
+    "prefer-for-of": false,
+    "prefer-object-spread": true,
+    "prefer-readonly": false,
+    "prettier": false,
+    "switch-default": false,
+    "variable-name": [
+      true,
+      "allow-leading-underscore",
+      "ban-keywords",
+      "check-format",
+      "allow-pascal-case"
+    ],
+    "max-line-length": [
+      true,
+      {
+        "limit": 120,
+        "ignore-pattern": "^import |^export {(.*?)}"
+      }
+    ]
+  }
 }

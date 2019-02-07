@@ -1,19 +1,19 @@
-import * as brect from "math/bbox"
+import * as brect from 'math/bbox'
 import { Random } from 'math/Random'
-import { MoveParams, VelMods } from 'phys/body';
-import { InteractFn, MutualForce } from 'phys/phys';
+import { MoveParams, VelMods } from 'phys/body'
+import { InteractFn, MutualForce } from 'phys/phys'
 import { Body, CollideProps, CollidingBody, ElasticCollideCalc, PhysProps, PointMass, RectCollisions, World } from 'phys/phys'
 import Two from 'two'
 import { Types as TwoTypes } from 'two'
 import { Events, Shape } from 'two'
 
-import { newPerfTimer, newPerfTimerDisabled } from "commons/perftimer";
-import { vec2 } from "math/vec2"
-import * as vec from "math/vec2"
-import { loggers } from "commons/logger";
-import * as ui from "scenes/ui"
+import { loggers } from 'commons/logger'
+import { newPerfTimer, newPerfTimerDisabled } from 'commons/perftimer'
+import { vec2 } from 'math/vec2'
+import * as vec from 'math/vec2'
+import * as ui from 'scenes/ui'
 
-const [trace, isTrace] = loggers().get("")
+const [trace, isTrace] = loggers().get('')
 
 class RectBody implements CollidingBody {
   collideSize: vec.vec2
@@ -24,7 +24,7 @@ class RectBody implements CollidingBody {
 
   constructor(w: World) {
     this.w = w
-    let kind = "rect"
+    let kind = 'rect'
     let r = w.rng.number(10, 40)
     let r1 = w.rng.number(10, 40)
     this.collideSize = [r, r1]
@@ -54,34 +54,29 @@ class RectBody implements CollidingBody {
     if (isNaN(x) || isNaN(y)) {
       //console.log("NaN bode = ", this.id, this.phys.coords, this.phys.vel, this.phys.force)
     }
-    t.set(this.phys.coords[0], this.phys.coords[1]);
+    t.set(this.phys.coords[0], this.phys.coords[1])
   }
 
   onBeforeMove(p: MoveParams) {
-		/*
-		if (p.step % 60 === 0 && (this.id === 10)) {
-			this.phys.mass = 100
-			this.phys.applyForce(vec.setRandLen(this.w.rng, vec.create(), 40, 50))
-		}*/
 
   }
 }
 
-export const collisionScene: ui.Scene = {
+export let collisionScene: ui.Scene = {
   defaultProps: {
     x: 1, y: 2
   },
   uiState: {
-    title: "Rectangles collide",
+    title: 'Rectangles collide',
     actions: {
-      fuck() { console.log("say fuck") }
+      fuck() { console.log('say fuck') }
     }
   },
   run() {
-    const elem = document.getElementById('sceneDrawingContainer')
+    let elem = document.getElementById('sceneDrawingContainer')
     console.log('elem', elem)
-    const width = 400, height = 400
-    const two = new Two({ width, height, type: TwoTypes.canvas }).appendTo(elem!)
+    let width = 400, height = 400
+    let two = new Two({ width, height, type: TwoTypes.canvas }).appendTo(elem!)
     runSceneCollide(two, {
       bodies: 300,
       w: width, h: height
@@ -93,7 +88,6 @@ function runSceneCollide(two: Two, opts: {
   bodies?: number,
   w: number, h: number
 }) {
-
 
   let N = 200
   let w = new World({
@@ -136,10 +130,10 @@ function impulseCollide(rng: Random, coef = 1): InteractFn {
   let r = brect.create()
   let mf = new MutualForce(rng)
   let collide = new ElasticCollideCalc(rng)
-  return function (a: CollidingBody, b: CollidingBody) {
+  return (a: CollidingBody, b: CollidingBody) => {
     let ok = brect.intersect(a.collide.box, b.collide.box, r)
     if (!ok) {
-      console.log("rects do not intersect", a.phys.id, b.phys.id)
+      console.log('rects do not intersect', a.phys.id, b.phys.id)
       return
     }
 

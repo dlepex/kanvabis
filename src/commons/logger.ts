@@ -1,4 +1,4 @@
-import { SSL_OP_SINGLE_DH_USE } from "constants";
+import { SSL_OP_SINGLE_DH_USE } from "constants"
 
 export type LoggerFn = (message?: any, ...rest: any[]) => void
 
@@ -14,8 +14,8 @@ export class Loggers {
     return this
   }
 
-  get(name: string = 'console'): [LoggerFn, boolean] {
-    const pair = this._handlers.find(pair => name.startsWith(pair[0]));
+  get(name = 'console'): [LoggerFn, boolean] {
+    const pair = this._handlers.find((p) => name.startsWith(p[0]))
     return pair ? [pair[1], true] : [emptyLoggerFn, false]
   }
 }

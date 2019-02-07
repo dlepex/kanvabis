@@ -1,16 +1,15 @@
-import * as brect from "math/bbox"
+import * as brect from 'math/bbox'
 import { Random } from 'math/Random'
-import { ID, MoveParams, VelMods } from 'phys/body';
-import { InterGraph, InteractFn, MutualForce } from 'phys/interact';
+import { ID, MoveParams, VelMods } from 'phys/body'
+import { InterGraph, InteractFn, MutualForce } from 'phys/interact'
 import { Body, CollideProps, CollidingBody, ElasticCollideCalc, PhysProps, PointMass, Proximity, RectCollisions, World } from 'phys/phys'
 import Two from 'two'
 import { Events, Shape } from 'two'
 
-import { filterViewCast } from "commons/collections";
-import { vec2 } from "math/vec2"
-import * as Vec from "math/vec2"
-import { EachWithEach } from "phys/detector";
-
+import { filterViewCast } from 'commons/collections'
+import { vec2 } from 'math/vec2'
+import * as Vec from 'math/vec2'
+import { EachWithEach } from 'phys/detector'
 
 class TheBody implements CollidingBody {
   id = 0
@@ -24,11 +23,10 @@ class TheBody implements CollidingBody {
   color = 0
   isNew = false
 
-
   constructor(w: World, radius?: number) {
     this.w = w
-    const kind = "rect"
-    const r = radius ? radius : w.rng.int(3, 6)
+    let kind = 'rect'
+    let r = radius ? radius : w.rng.int(3, 6)
     this.color = w.rng.int(0, 3)
     // let r1 = w.rng.number(9, 15)
     this.r = r
@@ -42,8 +40,8 @@ class TheBody implements CollidingBody {
   }
 
   shapeInit(two: Two) {
-    const rng = this.w.rng
-    const r = two.makeCircle(this.phys.coords[0], this.phys.coords[1], this.r * 0.7);
+    let rng = this.w.rng
+    let r = two.makeCircle(this.phys.coords[0], this.phys.coords[1], this.r * 0.7)
 
     // let r = two.makeRectangle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0], this.collide.size[1])
     this.shape = r
@@ -51,9 +49,9 @@ class TheBody implements CollidingBody {
     r.noStroke()
 
     switch (this.color) {
-      case 0: r.fill = 'black'; break;
-      case 1: r.fill = 'red'; break;
-      case 2: r.fill = 'gray'; break;
+      case 0: r.fill = 'black'; break
+      case 1: r.fill = 'red'; break
+      case 2: r.fill = 'gray'; break
     }
   }
 
@@ -61,45 +59,44 @@ class TheBody implements CollidingBody {
     if (!this.shape) {
       this.shapeInit(two)
     }
-    const t = this.shape.translation
+    let t = this.shape.translation
     // console.log("PHYS", this.phys.coords, this.phys.vel)
-    const [x, y] = this.phys.coords
+    let [x, y] = this.phys.coords
     if (isNaN(x) || isNaN(y)) {
-      console.log("NaN bode = ", this.id, this.phys.coords, this.phys.vel, this.phys.force)
+      console.log('NaN bode = ', this.id, this.phys.coords, this.phys.vel, this.phys.force)
     }
-    t.set(this.phys.coords[0], this.phys.coords[1]);
+    t.set(this.phys.coords[0], this.phys.coords[1])
   }
 
   onBeforeMove(p: MoveParams) {
-		/*
-		if (p.step % 60 === 0 && (this.id === 10)) {
-			this.phys.mass = 100
-			this.phys.applyForce(vec.setRandLen(this.w.rng, vec.create(), 40, 50))
-		}*/
-
+    /*
+    if (p.step % 60 === 0 && (this.id === 10)) {
+      this.phys.mass = 100
+      this.phys.applyForce(vec.setRandLen(this.w.rng, vec.create(), 40, 50))
+    }*/
   }
 }
 
-const collideSet = new Set<ID>()
+let collideSet = new Set<ID>()
 let world: World
 export function runSceneProximal(two: Two, opts: {
   bodies?: number, w: number, h: number,
 }) {
-  const N = 1800
+  let N = 1800
 
-  const w = new World({
+  let w = new World({
     size: [opts.w, opts.h]
   })
   world = w
   w.massCoef = 0.1
   w.velModifier = VelMods.compose(VelMods.friction(0, 0.0001), VelMods.friction(1, 0.1))
   for (let i = 0; i < N; i++) {
-    const b = new TheBody(w)
+    let b = new TheBody(w)
     w.add(b)
     b.shapeInit(two)
   }
 
-  const nonCollidingBodies: Iterable<TheBody> = filterViewCast(w.bodies, b => !collideSet.has(b.phys.id))
+  let nonCollidingBodies: Iterable<TheBody> = filterViewCast(w.bodies, (b) => !collideSet.has(b.phys.id))
 
   w.addInteraction({
     before() {
@@ -116,14 +113,14 @@ export function runSceneProximal(two: Two, opts: {
 
   two.bind('update' as any, () => {
 
-    const dt = 0.07
+    let dt = 0.07
 
     for (let s = 0; s < 1; s++) {
       w.nextStep(dt)
     }
 
-    for (const _b of w.bodies) {
-      const b: TheBody = _b as any
+    for (let _b of w.bodies) {
+      let b: TheBody = _b as any
       b.shapeUpdate(two)
     }
   }).play()
@@ -131,10 +128,10 @@ export function runSceneProximal(two: Two, opts: {
 }
 
 function vanDerVaals(rng: Random): InteractFn {
-  const mf = new MutualForce(rng)
-  return function (a: TheBody, b: TheBody) {
+  let mf = new MutualForce(rng)
+  return (a: TheBody, b: TheBody) => {
     mf.init(a, b)
-    const d = mf.dist
+    let d = mf.dist
     if (a.color !== b.color) {
 
       mf.apply(-1.2)  // -04
@@ -144,17 +141,16 @@ function vanDerVaals(rng: Random): InteractFn {
   }
 }
 
-
-const distVec = Vec.create()
+let distVec = Vec.create()
 function impulseCollide(rng: Random): InteractFn {
-  const r = brect.create()
-  const mf = new MutualForce(rng)
-  const collide = new ElasticCollideCalc(rng)
-  return function (a: TheBody, b: TheBody) {
-    const ok = brect.intersect(a.collide.box, b.collide.box, r)
+  let r = brect.create()
+  let mf = new MutualForce(rng)
+  let collide = new ElasticCollideCalc(rng)
+  return (a: TheBody, b: TheBody) => {
+    let ok = brect.intersect(a.collide.box, b.collide.box, r)
 
     Vec.subtract(distVec, a.phys.coords, b.phys.coords)
-    const d = (a.r + b.r) - Vec.len(distVec)
+    let d = (a.r + b.r) - Vec.len(distVec)
 
     if (d < -0.2) {
       return

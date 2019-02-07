@@ -23,10 +23,7 @@ export class Random {
   }
 
   colorRgb(): string {
-    const f = this.rfn
+    let f = this.rfn
     return 'rgb(' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ')'
   }
 }
-
-
-

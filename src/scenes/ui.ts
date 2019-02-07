@@ -1,18 +1,16 @@
-import { nonNull, Maybe, jsonStr, Undef } from 'commons/prelude';
-import * as _ from 'lodash-es';
+import { Maybe, Undef, jsonStr, nonNull } from 'commons/prelude'
+import * as _ from 'lodash-es'
 
 interface SceneUIState {
   title: string
   actions?: { [key: string]: () => any } // btnTitle -> onlick handler.
 }
 
-
 export interface Scene {
   uiState: SceneUIState
   defaultProps: object
   run(ui: SceneUI): void
 }
-
 
 export function runScene(sc: Scene) {
   new SceneUI().runScene(sc)
@@ -31,29 +29,29 @@ class SceneUI {
   _scene: Scene
 
   constructor() {
-    const el = (id: string) => nonNull(document.getElementById(id))
-    this._titleEl = el("sceneTitle")
-    this._buttonsEl = el("sceneButtons")
-    this._statLine = el("sceneStatusLine")
+    let el = (id: string) => nonNull(document.getElementById(id))
+    this._titleEl = el('sceneTitle')
+    this._buttonsEl = el('sceneButtons')
+    this._statLine = el('sceneStatusLine')
 
-    this._editor = new JSONEditor(el("jsonEditor"), {
+    this._editor = new JSONEditor(el('jsonEditor'), {
       mode: 'form'
     })
-    const ed = this._editor
+    let ed = this._editor
 
-    el("jsonMode").onclick = () => {
+    el('jsonMode').onclick = () => {
       if (ed.getMode() === 'form') ed.setMode('code')
       else ed.setMode('form')
     }
 
-    el("jsonReload").onclick = () => {
+    el('jsonReload').onclick = () => {
       this._storeProps()
       window.location.reload(false)
     }
   }
 
   get props(): Maybe<object> {
-    const j = this._editor.get()
+    let j = this._editor.get()
     return !_.isEmpty(j) ? j : undefined
   }
 
@@ -63,7 +61,7 @@ class SceneUI {
 
   runScene(scene: Scene) {
     this.resetState(scene.uiState)
-    this._scene = scene;
+    this._scene = scene
     if (!this.props) {
       this.props = this._loadProps() || scene.defaultProps
     }
@@ -73,14 +71,14 @@ class SceneUI {
 
   resetState(state: SceneUIState) {
     if (this._buttonsEl.childNodes.length !== 0) {
-      Array.from(this._buttonsEl.childNodes).forEach(child => child.remove())
+      Array.from(this._buttonsEl.childNodes).forEach((child) => child.remove())
     }
     if (state.title) {
       this._titleEl.innerText = state.title
     }
     if (state.actions) {
-      for (const [btnName, onclick] of Object.entries(state.actions)) {
-        const btn = document.createElement('button')
+      for (let [btnName, onclick] of Object.entries(state.actions)) {
+        let btn = document.createElement('button')
         btn.innerText = btnName
         btn.id = `btn-${btn}`
         btn.onclick = onclick
@@ -94,15 +92,15 @@ class SceneUI {
   }
 
   _storeProps() {
-    const k = this._scene.uiState.title
+    let k = this._scene.uiState.title
     window.sessionStorage.setItem(k, jsonStr(this.props))
   }
 
   _loadProps(): Undef<object> {
-    const k = this._scene.uiState.title
-    const str = window.sessionStorage.getItem(k)
+    let k = this._scene.uiState.title
+    let str = window.sessionStorage.getItem(k)
     if (!str) return undefined
-    const obj = JSON.parse(str)
+    let obj = JSON.parse(str)
     return !_.isEmpty(obj) ? obj : undefined
   }
 }

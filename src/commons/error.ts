@@ -1,7 +1,7 @@
 
 export function assert(cond: boolean, msg: string | (() => string), ...args: any[]) {
   if (!cond) {
-    const m = (typeof msg === 'function') ? msg() : msg
+    let m = (typeof msg === 'function') ? msg() : msg
     throw assertFailed(m)
   }
 }
@@ -12,7 +12,6 @@ export function nonNull<T>(value: T | undefined | null, valueName?: string): T {
   }
   return value!!
 }
-
 
 export function invalidArg(arg: string, expectedValueMsg: string, gotValue?: any): Error {
   let m = `Invalid argument '${arg}': ${expectedValueMsg}`

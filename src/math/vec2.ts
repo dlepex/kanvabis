@@ -1,8 +1,9 @@
 
-import * as glMatrix from "gl-matrix/src/gl-matrix/common"
-import * as vec from "gl-matrix/src/gl-matrix/vec2"
+import * as glMatrix from 'gl-matrix/src/gl-matrix/common'
+import * as vec from 'gl-matrix/src/gl-matrix/vec2'
+
 import { EPSILON } from './math'
-import { Random } from './Random';
+import { Random } from './Random'
 
 export type vec2 = [number, number]
 
@@ -13,7 +14,6 @@ interface Coords2 {
 // INIT {{
 glMatrix.setMatrixArrayType(Float64Array)
 // }}
-
 
 export function create(x = 0.0, y = 0.0): vec2 {
   return new Float64Array([x, y]) as any
@@ -108,9 +108,9 @@ export function setLen(out: vec2, newlen = 1): boolean {
   const l = len(out)
   if (l === 0) return false
   const k = newlen / l
-  out[0] *= k;
-  out[1] *= k;
-  return true;
+  out[0] *= k
+  out[1] *= k
+  return true
 }
 
 export function copyToCoords(out: Coords2, v: vec2): Coords2 {

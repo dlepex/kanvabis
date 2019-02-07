@@ -1,4 +1,4 @@
-import { LoggerFn } from "./logger";
+import { LoggerFn } from './logger'
 
 export function newPerfTimer(name: string) { return new PerfTimerImpl(name) }
 export function newPerfTimerDisabled(name: string) { return DummyPerfTimer }
@@ -38,5 +38,3 @@ const DummyPerfTimer = {
   stop() { },
   printDuration() { },
 }
-
-

@@ -1,15 +1,15 @@
 
-import { MultiMap } from "commons/MultiMap";
-import { Constructor, int } from "commons/prelude";
-import { assert, nonNull } from "commons/error";
-import * as brect from "math/bbox"
-import { Random } from "math/Random";
-import { vec2 } from "math/vec2"
-import * as vec from "math/vec2"
+import { assert, nonNull } from 'commons/error'
+import { MultiMap } from 'commons/MultiMap'
+import { Constructor, int } from 'commons/prelude'
+import * as brect from 'math/bbox'
+import { Random } from 'math/Random'
+import { vec2 } from 'math/vec2'
+import * as vec from 'math/vec2'
 import KDBush from 'vendor/kdbush/index.js'
 
-import { Body, ID, PhysProps } from "./body"
-export type InteractFn = (a: Body, b: Body) => void;
+import { Body, ID, PhysProps } from './body'
+export type InteractFn = (a: Body, b: Body) => void
 export type InterLaunchFn = () => void
 export type InterLauncher = (i: Interaction, f: InteractFn) => InterLaunchFn
 
@@ -34,17 +34,17 @@ type InterKey = number
  * Undirected interactions graph, represented as edge set.
  */
 export class InterGraph {
-  set: Set<InterKey> = new Set()
-
-  clear() { this.set.clear() }
 
   static readonly keyMask = (1 << 26) - 1
 
   static key(a: ID, b: ID): InterKey {
-    if (a > b) { const t = a; a = b; b = t }
+    if (a > b) { let t = a; a = b; b = t }
     return (a as number << 25) + (b as number)
   }
 
+  set: Set<InterKey> = new Set()
+
+  clear() { this.set.clear() }
   hasKey(k: InterKey): boolean {
     return this.set.has(k)
   }
@@ -53,11 +53,11 @@ export class InterGraph {
 
   has(a: ID, b: ID): boolean { return this.set.has(InterGraph.key(a, b)) }
 
-	/**
+  /**
 	 * @returns !has(k) before addition
 	 */
   addKey(k: InterKey): boolean {
-    const set = this.set
+    let set = this.set
     if (!set.has(k)) {
       set.add(k)
       return true
@@ -70,8 +70,8 @@ export class InterGraph {
 
   forEach(cb: (a: ID, b: ID, k: InterKey) => void) {
     this.set.forEach((key: number) => {
-      const mask = (1 << 26) - 1
-      const b = key & mask, a = (key >> 25) & mask
+      let mask = (1 << 26) - 1
+      let b = key & mask, a = (key >> 25) & mask
       cb(a, b, key)
     })
   }
@@ -86,19 +86,17 @@ export function interGraphAsProvider(ig: InterGraph, byID: (id: ID) => Body): In
   }
 }
 
-
-
-const dedupGraph = new InterGraph()
+let dedupGraph = new InterGraph()
 
 function graphsHas(graphs: InterGraph[], key: InterKey) {
-  return graphs.some(g => g.hasKey(key))
+  return graphs.some((g) => g.hasKey(key))
 }
 
 export function interLauncher(c: Interaction): InterLaunchFn {
-  const pr = c.detect
-  const interact = c.interact
+  let pr = c.detect
+  let interact = c.interact
   let exclude: InterGraph[] | undefined
-  const before = c.before
+  let before = c.before
   if (c.exclude) {
     if (Array.isArray(c.exclude)) exclude = c.exclude
     else exclude = [c.exclude]
@@ -108,7 +106,7 @@ export function interLauncher(c: Interaction): InterLaunchFn {
     return () => {
       if (before !== undefined) before()
       pr.forEach((a, b) => {
-        const k = InterGraph.key(a.phys.id, b.phys.id)
+        let k = InterGraph.key(a.phys.id, b.phys.id)
         if (exclude === undefined || !graphsHas(exclude!!, k)) {
           interact(a, b)
         }
@@ -120,7 +118,7 @@ export function interLauncher(c: Interaction): InterLaunchFn {
       dedupGraph.clear() // reusing global dedup graph!
 
       pr.forEach((a, b) => {
-        const k = InterGraph.key(a.phys.id, b.phys.id)
+        let k = InterGraph.key(a.phys.id, b.phys.id)
         if ((exclude === undefined || !graphsHas(exclude, k)) && dedupGraph.addKey(k)) {
           interact(a, b)
         }
@@ -145,13 +143,13 @@ export class MutualForce {
     return this
   }
 
-	/**
-	 * @param scalar if positive - mutual attraction, else - repulsion
-	 */
+  /**
+   * @param scalar if positive - mutual attraction, else - repulsion
+   */
   apply(scalar: number) {
     if (scalar === 0) return
-    const f = this.coordsDif
-    const d = this.dist
+    let f = this.coordsDif
+    let d = this.dist
     if (d !== 0) {
       vec.scaleBy(f, scalar / this.dist)
     } else {
@@ -164,15 +162,16 @@ export class MutualForce {
 }
 
 export class ElasticCollideCalc {
+  _n: vec2 = vec.create()
+  dn: vec2 = vec.create()
+  dv: vec2 = vec.create()
   constructor(public rng: Random) { }
 
-  private n: vec2 = vec.create()
-
   _normalToCollisionLine(a: PhysProps, b: PhysProps, n?: vec.vec2) {
-    if (n === undefined) {
-      n = vec.subtract(this.n, a.coords, b.coords) // normal to "collision line"
+    if (n == null) {
+      n = vec.subtract(this._n, a.coords, b.coords) // normal to "collision line"
     } else {
-      n = vec.copy(this.n, n)
+      n = vec.copy(this._n, n)
     }
     if (!vec.isZero(n)) vec.normalize(n, n)
     else vec.setRand1(this.rng, n)
@@ -182,26 +181,22 @@ export class ElasticCollideCalc {
   central(a: PhysProps, b: PhysProps, n?: vec.vec2) {
     n = this._normalToCollisionLine(a, b, n)
 
-    const va = vec.len(a.vel), vb = vec.len(b.vel)
-    const ma = a.mass, mb = b.mass, m = ma + mb, dm = ma - mb
+    let va = vec.len(a.vel), vb = vec.len(b.vel)
+    let ma = a.mass, mb = b.mass, m = ma + mb, dm = ma - mb
     // result speeds after collision
-    const ua = (va * dm + 2 * mb * vb) / m
-    const ub = (-vb * dm + 2 * ma * va) / m
-
+    let ua = (va * dm + 2 * mb * vb) / m
+    let ub = (-vb * dm + 2 * ma * va) / m
 
     vec.scale(a.vel, n, ua)
     vec.scale(b.vel, n, -ub)
   }
 
-  private dn: vec2 = vec.create()
-  private dv: vec2 = vec.create()
-
   nonCentral(a: PhysProps, b: PhysProps, n?: vec.vec2) {
     n = this._normalToCollisionLine(a, b, n)
-    const ma = a.mass, mb = b.mass, m = ma + mb
+    let ma = a.mass, mb = b.mass, m = ma + mb
     let v = a.vel
-    const dv = vec.subtract(this.dv, a.vel, b.vel)
-    const dn = vec.scale(this.dn, n, 2 * vec.dot(n, dv) * (mb / m))
+    let dv = vec.subtract(this.dv, a.vel, b.vel)
+    let dn = vec.scale(this.dn, n, 2 * vec.dot(n, dv) * (mb / m))
     vec.subtract(v, v, dn)
 
     v = b.vel
@@ -210,5 +205,3 @@ export class ElasticCollideCalc {
     vec.subtract(v, v, vec.scale(dn, n, 2 * vec.dot(n, dv) * (ma / m)))
   }
 }
-
-
