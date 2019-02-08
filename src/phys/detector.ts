@@ -56,22 +56,21 @@ export class Proximity implements InterDetector {
 }
 
 export interface CollidingBody extends Body {
-  collideSize?: vec.vec2
   collide: CollideProps
 }
 
 export class CollideProps {
-  box: brect.BoundaryBox = brect.create()
+  readonly box: brect.BoundaryBox = brect.create()
   _step = 0
   minX = 0; minY = 0; maxX = 0; maxY = 0
 
-  constructor(public _b: CollidingBody) { }
+  constructor(public _b: CollidingBody, public size: vec2) { }
 
   _calcBox(step: int) {
     if (step === this._step) return this
     this._step = step
     let b = this._b
-    let sz = b.collideSize
+    let sz = this.size
     if (sz !== undefined) {
       let r = this.box
       brect.setCenterVec(r, b.phys.coords, sz)
@@ -94,7 +93,7 @@ export class RectCollisions implements InterDetector {
     let step = this.world.step
     for (let b of this.bodies) {
       let p = (b as CollidingBody).collide
-      if (p == null) continue
+      if (p === undefined) continue
       items.push(p._calcBox(step))
     }
     if (items.length === 0) return

@@ -16,7 +16,6 @@ import * as ui from 'scenes/ui'
 const [trace, isTrace] = loggers().get('')
 
 class RectBody implements CollidingBody {
-  collideSize: vec.vec2
   collide: CollideProps
   phys: PhysProps
   shape: Shape
@@ -27,8 +26,7 @@ class RectBody implements CollidingBody {
     let kind = 'rect'
     let r = w.rng.number(10, 40)
     let r1 = w.rng.number(10, 40)
-    this.collideSize = [r, r1]
-    this.collide = new CollideProps(this)
+    this.collide = new CollideProps(this, [r, r1])
     this.phys = new PointMass({
       coords: w.rngCoords(),
       mass: r * r1 / 80,
@@ -39,8 +37,7 @@ class RectBody implements CollidingBody {
   shapeInit(two: Two) {
     let rng = this.w.rng
     //let r = two.makeCircle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0]);
-
-    let r = two.makeRectangle(this.phys.coords[0], this.phys.coords[1], this.collideSize[0], this.collideSize[1])
+    let r = two.makeRectangle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0], this.collide.size[1])
     this.shape = r
     r.linewidth = rng.int(1, 2)
     r.noStroke()

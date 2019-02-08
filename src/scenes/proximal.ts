@@ -30,8 +30,7 @@ class TheBody implements CollidingBody {
     this.color = w.rng.int(0, 3)
     // let r1 = w.rng.number(9, 15)
     this.r = r
-    this.collideSize = [r, r]
-    this.collide = new CollideProps(this)
+    this.collide = new CollideProps(this, [r, r])
     this.phys = new PointMass({
       coords: w.rngCoords(),
       vel: Vec.scaleBy(Vec.setRand1(w.rng, Vec.create()), 2),
@@ -69,11 +68,6 @@ class TheBody implements CollidingBody {
   }
 
   onBeforeMove(p: MoveParams) {
-    /*
-    if (p.step % 60 === 0 && (this.id === 10)) {
-      this.phys.mass = 100
-      this.phys.applyForce(vec.setRandLen(this.w.rng, vec.create(), 40, 50))
-    }*/
   }
 }
 
