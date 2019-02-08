@@ -1,4 +1,4 @@
-import { Maybe, Undef, jsonStr, nonNull } from 'commons/prelude'
+import { Maybe, Undef, jsonStr, nonNull, int } from 'commons/prelude'
 import * as _ from 'lodash-es'
 
 interface SceneUIState {
@@ -6,27 +6,39 @@ interface SceneUIState {
   actions?: { [key: string]: () => any } // btnTitle -> onlick handler.
 }
 
-export interface Scene {
+export interface Scene<P = object> {
   uiState: SceneUIState
-  defaultProps: object
-  run(ui: SceneUI): void
+  defaultProps: P
+  presets?: { [key: string]: P }
+  run(): void
+}
+
+export interface CanvasProps {
+  width: int
+  heigh: int
 }
 
 export function runScene(sc: Scene) {
-  new SceneUI().runScene(sc)
+  SceneUI.obj.runScene(sc)
 }
+
 
 declare const JSONEditor: any
 /**
  * Singleton.
  */
-class SceneUI {
+export class SceneUI {
 
+  static _obj: SceneUI
   _titleEl: HTMLElement
   _buttonsEl: HTMLElement
   _statLine: HTMLElement
   _editor: any // JSONEditor
   _scene: Scene
+
+  static get obj() {
+    return SceneUI._obj ? SceneUI._obj : (SceneUI._obj = new SceneUI())
+  }
 
   constructor() {
     let el = (id: string) => nonNull(document.getElementById(id))
@@ -66,7 +78,7 @@ class SceneUI {
       this.props = this._loadProps() || scene.defaultProps
     }
 
-    scene.run(this)
+    scene.run()
   }
 
   resetState(state: SceneUIState) {

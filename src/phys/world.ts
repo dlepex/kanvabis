@@ -2,14 +2,11 @@ import { assert } from 'commons/error'
 import { castMutable, int } from 'commons/prelude'
 import { Random } from 'math/Random'
 import { vec2 } from 'math/vec2'
-import * as vec from 'math/vec2'
+import * as Vec from 'math/vec2'
 
 import { Body, BodyResolverFn, CoordMods, CoordsModFn, ID, MoveParams, PhysProps, PointMass, VelModFn, _Movable } from './body'
 import { InterLauncher, InteractFn, Interaction, interLauncher } from './interact'
 
-export interface WorldConf {
-  size: vec.vec2
-}
 
 type DeleteListener = (b: Body) => void
 
@@ -29,8 +26,10 @@ export class World {
   _idCounter = 1
   _moveParams: MoveParams
 
-  constructor(c: WorldConf) {
-    this.size = vec.clone(c.size)
+  constructor(c: {
+    size: vec2
+  }) {
+    this.size = Vec.clone(c.size)
     let bodiesMap = new Map()
     this._idBodyMap = bodiesMap
     this.get = (id) => bodiesMap.get(id)
@@ -51,7 +50,7 @@ export class World {
   rngCoords(dx?: number, dy?: number): vec2 {
     dx = dx || this.size[0] / 10
     dy = dy || this.size[1] / 10
-    let v = vec.create()
+    let v = Vec.create()
     v[0] = this.rng.number(dx, this.size[0] - dx)
     v[1] = this.rng.number(dy, this.size[1] - dy)
     return v
@@ -80,7 +79,7 @@ export class World {
       mp.velModifier = b.velModifier || this.velModifier
       let movable: _Movable = b.phys as any
       movable._move(mp)
-      vec.set(b.phys.force, 0, 0)
+      Vec.set(b.phys.force, 0, 0)
     }
   }
 

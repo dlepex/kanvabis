@@ -10,6 +10,65 @@ import { filterViewCast } from 'commons/collections'
 import { vec2 } from 'math/vec2'
 import * as Vec from 'math/vec2'
 import { EachWithEach } from 'phys/detector'
+import { Scene, SceneUI } from './ui';
+import { int } from 'commons/types';
+import { head } from 'lodash-es';
+
+interface Props {
+  world: {
+    size: vec2
+    dt: number
+    steps: int
+    massCoef: number
+  }
+  particles: {
+    count?: int
+    color: string
+    r?: int
+    rd?: int
+  }[]
+  particlesTotal?: int
+  rfCoef: number
+  rfSelfCoef: number
+}
+
+const commonProps = {
+  world: {
+    size: [500, 500] as vec2,
+    dt: 0.07,
+    steps: 1,
+    massCoef: 0.1
+  },
+  particlesTotal: 2000,
+  rfCoef: 1.2,
+  rfSelfCoef: 0.07,
+}
+
+export const scene: Scene<Props> = {
+  uiState: {
+    title: 'Repulsion Patterns',
+    actions: {
+      'Stop': () => {
+
+      }
+    }
+  },
+  defaultProps: {
+    ...commonProps,
+    particles: [{ color: 'red' }, { color: 'black' }, { color: 'lightgray' }]
+  },
+  presets: {
+    'Two Sorts': {
+      ...commonProps,
+      particles: [{ color: 'red' }, { color: 'black' }]
+    }
+  },
+  run() {
+
+  }
+}
+
+
 
 class TheBody implements CollidingBody {
   id = 0
