@@ -1,4 +1,4 @@
-import { Maybe, Undef, jsonStr, nonNull, int } from 'commons/prelude'
+import { Maybe, Undef, int, jsonStr, nonNull } from 'commons/prelude'
 import * as _ from 'lodash-es'
 
 interface SceneUIState {
@@ -9,7 +9,7 @@ interface SceneUIState {
 export interface Scene<P = object> {
   uiState: SceneUIState
   defaultProps: P
-  presets?: { [key: string]: P }
+  presetProps?: { [key: string]: P }
   run(): void
 }
 
@@ -21,7 +21,6 @@ export interface CanvasProps {
 export function runScene(sc: Scene) {
   SceneUI.obj.runScene(sc)
 }
-
 
 declare const JSONEditor: any
 /**

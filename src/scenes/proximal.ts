@@ -1,18 +1,20 @@
+import { filterViewCast } from 'commons/collections'
+import { int, toInt32 } from 'commons/types'
+import { dot } from 'gl-matrix/src/gl-matrix/quat'
+import { head } from 'lodash-es'
 import * as brect from 'math/bbox'
 import { Random } from 'math/Random'
+import { vec2 } from 'math/vec2'
+import * as Vec from 'math/vec2'
 import { ID, MoveParams, VelMods } from 'phys/body'
+import { EachWithEach } from 'phys/detector'
 import { InterGraph, InteractFn, MutualForce } from 'phys/interact'
 import { Body, CollideProps, CollidingBody, ElasticCollideCalc, PhysProps, PointMass, Proximity, RectCollisions, World } from 'phys/phys'
 import Two from 'two'
+import { Types as TwoTypes } from 'two'
 import { Events, Shape } from 'two'
 
-import { filterViewCast } from 'commons/collections'
-import { vec2 } from 'math/vec2'
-import * as Vec from 'math/vec2'
-import { EachWithEach } from 'phys/detector'
-import { Scene, SceneUI } from './ui';
-import { int } from 'commons/types';
-import { head } from 'lodash-es';
+import { Scene, SceneUI } from './ui'
 
 interface Props {
   world: {
@@ -21,15 +23,18 @@ interface Props {
     steps: int
     massCoef: number
   }
-  particles: {
+  dots: Array<{
     count?: int
     color: string
     r?: int
-    rd?: int
-  }[]
-  particlesTotal?: int
+  }>
+  dotsDef: {
+    total?: int
+    r?: int
+  }
   rfCoef: number
   rfSelfCoef: number
+  proximity: number
 }
 
 const commonProps = {
@@ -39,36 +44,43 @@ const commonProps = {
     steps: 1,
     massCoef: 0.1
   },
-  particlesTotal: 2000,
+  dotsDef: {
+    total: 1400,
+    r: 4
+  },
   rfCoef: 1.2,
-  rfSelfCoef: 0.07,
+  rfSelfCoef: 0.015,
+  proximity: 23
 }
 
 export const scene: Scene<Props> = {
   uiState: {
     title: 'Repulsion Patterns',
     actions: {
-      'Stop': () => {
+      Stop: () => {
 
       }
     }
   },
   defaultProps: {
     ...commonProps,
-    particles: [{ color: 'red' }, { color: 'black' }, { color: 'lightgray' }]
+    dots: [{ color: 'red' }, { color: 'black' }, { color: 'lightgray' }]
   },
-  presets: {
+  presetProps: {
     'Two Sorts': {
       ...commonProps,
-      particles: [{ color: 'red' }, { color: 'black' }]
+      dots: [{ color: 'red' }, { color: 'black' }]
     }
   },
   run() {
-
+    let props: Props = SceneUI.obj.props as any
+    let elem = document.getElementById('sceneDrawingContainer')
+    console.log('elem', elem)
+    let [width, height] = props.world.size
+    let two = new Two({ width, height, type: TwoTypes.canvas }).appendTo(elem!)
+    runSceneProximal(two, props)
   }
 }
-
-
 
 class TheBody implements CollidingBody {
   id = 0
@@ -76,41 +88,28 @@ class TheBody implements CollidingBody {
   collide: CollideProps
   phys: PhysProps
   shape: Shape
-  w: World
   r: number
 
-  color = 0
+  color: string
   isNew = false
 
-  constructor(w: World, radius?: number) {
-    this.w = w
-    let kind = 'rect'
-    let r = radius ? radius : w.rng.int(3, 6)
-    this.color = w.rng.int(0, 3)
-    // let r1 = w.rng.number(9, 15)
-    this.r = r
+  constructor(opts: { color: string, radius: int }) {
+    this.color = opts.color
+    let r = this.r = opts.radius
     this.collide = new CollideProps(this, [r, r])
     this.phys = new PointMass({
-      coords: w.rngCoords(),
-      vel: Vec.scaleBy(Vec.setRand1(w.rng, Vec.create()), 2),
+      coords: world.rngCoords(),
+      vel: Vec.scaleBy(Vec.setRand1(world.rng, Vec.create()), 2),
       mass: r * r / 80
     })
   }
 
   shapeInit(two: Two) {
-    let rng = this.w.rng
-    let r = two.makeCircle(this.phys.coords[0], this.phys.coords[1], this.r * 0.7)
-
+    let r = two.makeCircle(this.phys.coords[0], this.phys.coords[1], this.r)
     // let r = two.makeRectangle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0], this.collide.size[1])
     this.shape = r
-    r.linewidth = rng.int(1, 2)
     r.noStroke()
-
-    switch (this.color) {
-      case 0: r.fill = 'black'; break
-      case 1: r.fill = 'red'; break
-      case 2: r.fill = 'gray'; break
-    }
+    r.fill = this.color
   }
 
   shapeUpdate(two: Two) {
@@ -132,24 +131,30 @@ class TheBody implements CollidingBody {
 
 let collideSet = new Set<ID>()
 let world: World
-export function runSceneProximal(two: Two, opts: {
-  bodies?: number, w: number, h: number,
-}) {
-  let N = 1800
+
+export function runSceneProximal(two: Two, props: Props) {
 
   let w = new World({
-    size: [opts.w, opts.h]
+    size: props.world.size
   })
   world = w
-  w.massCoef = 0.1
+  w.massCoef = props.world.massCoef
   w.velModifier = VelMods.compose(VelMods.friction(0, 0.0001), VelMods.friction(1, 0.1))
-  for (let i = 0; i < N; i++) {
-    let b = new TheBody(w)
-    w.add(b)
-    b.shapeInit(two)
-  }
 
   let nonCollidingBodies: Iterable<TheBody> = filterViewCast(w.bodies, (b) => !collideSet.has(b.phys.id))
+
+  for (let d of props.dots) {
+    let n = toInt32(d.count || (props.dotsDef.total!! / props.dots.length))
+    console.log("dots group: ", n, d)
+    while (n-- > 0) {
+      let b = new TheBody({
+        color: d.color,
+        radius: d.r || props.dotsDef.r!!
+      })
+      w.add(b)
+      b.shapeInit(two)
+    }
+  }
 
   w.addInteraction({
     before() {
@@ -160,13 +165,13 @@ export function runSceneProximal(two: Two, opts: {
   })
 
   w.addInteraction({
-    detect: new Proximity(23, nonCollidingBodies), //new Proximity(30, nonCollidingBodies),
-    interact: vanDerVaals(w.rng),
+    detect: new Proximity(props.proximity, nonCollidingBodies), //new Proximity(30, nonCollidingBodies),
+    interact: vanDerVaals(w.rng, props),
   })
 
   two.bind('update' as any, () => {
 
-    let dt = 0.07
+    let dt = props.world.dt
 
     for (let s = 0; s < 1; s++) {
       w.nextStep(dt)
@@ -180,16 +185,17 @@ export function runSceneProximal(two: Two, opts: {
 
 }
 
-function vanDerVaals(rng: Random): InteractFn {
+function vanDerVaals(rng: Random, props: Props): InteractFn {
   let mf = new MutualForce(rng)
+  let rf = -props.rfCoef
+  let rfSefl = -props.rfSelfCoef
   return (a: TheBody, b: TheBody) => {
     mf.init(a, b)
     let d = mf.dist
     if (a.color !== b.color) {
-
-      mf.apply(-1.2)  // -04
+      mf.apply(rf)  // -04
     } else if (d < 5) {
-      mf.apply(-0.015)
+      mf.apply(rfSefl)
     }
   }
 }
@@ -225,3 +231,36 @@ function impulseCollide(rng: Random): InteractFn {
 function color(r: number, g: number, b: number): string {
   return 'rgb(' + (Math.floor(r * 256)) + ',' + (Math.floor(g * 256)) + ',' + (Math.floor(b * 256)) + ')'
 }
+
+/*
+
+{
+  "world": {
+    "size": [
+      800,
+      300
+    ],
+    "dt": 0.1,
+    "steps": 1,
+    "massCoef": 0.4
+  },
+  "dotsDef": {
+    "total": 2500,
+    "r": 2
+  },
+  "rfCoef": 1.2,
+  "rfSelfCoef": 0.1,
+  "proximity": 23,
+  "dots": [
+    {
+      "color": "brown"
+    },
+    {
+      "color": "green"
+    },
+    {
+      "color": "orange"
+    }
+  ]
+}
+*/

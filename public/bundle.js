@@ -3,6 +3,32 @@
 
     var Two__default = 'default' in Two ? Two['default'] : Two;
 
+    function filterViewCast(it, filter) {
+        return new FilterView(it, filter);
+    }
+    class FilterView {
+        constructor(it, filter) {
+            this.it = it;
+            this.filter = filter;
+        }
+        *[Symbol.iterator]() {
+            let f = this.filter;
+            for (let e of this.it) {
+                if (f(e))
+                    yield e;
+            }
+        }
+    }
+    //# sourceMappingURL=collections.js.map
+
+    // Most common utilities.
+    function castMutable(o) { return o; }
+    function toInt32(v) {
+        return v >> 0;
+    }
+    const jsonStr = JSON.stringify;
+    //# sourceMappingURL=types.js.map
+
     function create(x1 = 0, y1 = 0, x2 = 0, y2 = 0) {
         return [x1, y1, x2, y2];
     }
@@ -11,9 +37,6 @@
         out[1] = y1;
         out[2] = x2;
         out[3] = y2;
-    }
-    function area(a) {
-        return (a[2] - a[0]) * (a[3] - a[1]);
     }
     function intersect(a, b, out) {
         let x1 = Math.max(a[0], b[0]);
@@ -377,54 +400,6 @@
     }
     //# sourceMappingURL=body.js.map
 
-    function assert(cond, msg, ...args) {
-        if (!cond) {
-            let m = (typeof msg === 'function') ? msg() : msg;
-            throw assertFailed(m);
-        }
-    }
-    function nonNull(value, valueName) {
-        if (value == null) {
-            let m = `Value ${valueName} is _undefined_ or _null_`;
-            throw assertFailed(m);
-        }
-        return value;
-    }
-    function assertFailed(msg) {
-        return new Error(`Assert failed ${msg}`);
-    }
-    //# sourceMappingURL=error.js.map
-
-    // Most common utilities.
-    function castMutable(o) { return o; }
-    const jsonStr = JSON.stringify;
-    //# sourceMappingURL=types.js.map
-
-    //# sourceMappingURL=prelude.js.map
-
-    // "rich random"
-    class Random {
-        constructor(rfn = Math.random) {
-            this.rfn = rfn;
-        }
-        /** from <= result < to */
-        number(from, to) {
-            return from + this.rfn() * (to - from);
-        }
-        /** from <= result < to */
-        int(from, to) {
-            return Math.floor(from + this.rfn() * (to - from));
-        }
-        bool() {
-            return this.int(0, 2) === 0;
-        }
-        colorRgb() {
-            let f = this.rfn;
-            return 'rgb(' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ')';
-        }
-    }
-    //# sourceMappingURL=Random.js.map
-
     /**
      * Undirected interactions graph, represented as edge set.
      */
@@ -510,6 +485,38 @@
             };
         }
     }
+    class MutualForce {
+        constructor(rng) {
+            this.rng = rng;
+            this.dist = 0;
+            this.coordsDif = create$2();
+        }
+        init(a, b) {
+            this.a = a;
+            this.b = b;
+            subtract$1(this.coordsDif, b.phys.coords, a.phys.coords);
+            this.dist = len$1(this.coordsDif);
+            return this;
+        }
+        /**
+         * @param scalar if positive - mutual attraction, else - repulsion
+         */
+        apply(scalar) {
+            if (scalar === 0)
+                return;
+            let f = this.coordsDif;
+            let d = this.dist;
+            if (d !== 0) {
+                scaleBy(f, scalar / this.dist);
+            }
+            else {
+                scaleBy(setRand1(this.rng, f), scalar);
+            }
+            this.a.phys.applyForce(f);
+            neg(f, f);
+            this.b.phys.applyForce(f);
+        }
+    }
     class ElasticCollideCalc {
         constructor(rng) {
             this.rng = rng;
@@ -554,6 +561,49 @@
         }
     }
     //# sourceMappingURL=interact.js.map
+
+    function assert(cond, msg, ...args) {
+        if (!cond) {
+            let m = (typeof msg === 'function') ? msg() : msg;
+            throw assertFailed(m);
+        }
+    }
+    function nonNull(value, valueName) {
+        if (value == null) {
+            let m = `Value ${valueName} is _undefined_ or _null_`;
+            throw assertFailed(m);
+        }
+        return value;
+    }
+    function assertFailed(msg) {
+        return new Error(`Assert failed ${msg}`);
+    }
+    //# sourceMappingURL=error.js.map
+
+    //# sourceMappingURL=prelude.js.map
+
+    // "rich random"
+    class Random {
+        constructor(rfn = Math.random) {
+            this.rfn = rfn;
+        }
+        /** from <= result < to */
+        number(from, to) {
+            return from + this.rfn() * (to - from);
+        }
+        /** from <= result < to */
+        int(from, to) {
+            return Math.floor(from + this.rfn() * (to - from));
+        }
+        bool() {
+            return this.int(0, 2) === 0;
+        }
+        colorRgb() {
+            let f = this.rfn;
+            return 'rgb(' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ')';
+        }
+    }
+    //# sourceMappingURL=Random.js.map
 
     class World {
         constructor(c) {
@@ -649,12 +699,179 @@
     }
     //# sourceMappingURL=world.js.map
 
+    function sortKD(ids, coords, nodeSize, left, right, axis) {
+        if (right - left <= nodeSize)
+            return;
+        const m = (left + right) >> 1; // middle index
+        // sort ids and coords around the middle index so that the halves lie
+        // either left/right or top/bottom correspondingly (taking turns)
+        select(ids, coords, m, left, right, axis);
+        // recursively kd-sort first half and second half on the opposite axis
+        sortKD(ids, coords, nodeSize, left, m - 1, 1 - axis);
+        sortKD(ids, coords, nodeSize, m + 1, right, 1 - axis);
+    }
+    // custom Floyd-Rivest selection algorithm: sort ids and coords so that
+    // [left..k-1] items are smaller than k-th item (on either x or y axis)
+    function select(ids, coords, k, left, right, axis) {
+        while (right > left) {
+            if (right - left > 600) {
+                const n = right - left + 1;
+                const m = k - left + 1;
+                const z = Math.log(n);
+                const s = 0.5 * Math.exp(2 * z / 3);
+                const sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
+                const newLeft = Math.max(left, Math.floor(k - m * s / n + sd));
+                const newRight = Math.min(right, Math.floor(k + (n - m) * s / n + sd));
+                select(ids, coords, k, newLeft, newRight, axis);
+            }
+            const t = coords[2 * k + axis];
+            let i = left;
+            let j = right;
+            swapItem(ids, coords, left, k);
+            if (coords[2 * right + axis] > t)
+                swapItem(ids, coords, left, right);
+            while (i < j) {
+                swapItem(ids, coords, i, j);
+                i++;
+                j--;
+                while (coords[2 * i + axis] < t)
+                    i++;
+                while (coords[2 * j + axis] > t)
+                    j--;
+            }
+            if (coords[2 * left + axis] === t)
+                swapItem(ids, coords, left, j);
+            else {
+                j++;
+                swapItem(ids, coords, j, right);
+            }
+            if (j <= k)
+                left = j + 1;
+            if (k <= j)
+                right = j - 1;
+        }
+    }
+    function swapItem(ids, coords, i, j) {
+        swap(ids, i, j);
+        swap(coords, 2 * i, 2 * j);
+        swap(coords, 2 * i + 1, 2 * j + 1);
+    }
+    function swap(arr, i, j) {
+        const tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+    }
     //# sourceMappingURL=sort.js.map
 
+    function range(ids, coords, minX, minY, maxX, maxY, nodeSize, result = []) {
+        const stack = [0, ids.length - 1, 0];
+        // recursively search for items in range in the kd-sorted arrays
+        while (stack.length) {
+            const axis = stack.pop();
+            const right = stack.pop();
+            const left = stack.pop();
+            // if we reached "tree node", search linearly
+            if (right - left <= nodeSize) {
+                for (let i = left; i <= right; i++) {
+                    const x = coords[2 * i];
+                    const y = coords[2 * i + 1];
+                    if (x >= minX && x <= maxX && y >= minY && y <= maxY)
+                        result.push(ids[i]);
+                }
+                continue;
+            }
+            // otherwise find the middle index
+            const m = (left + right) >> 1;
+            // include the middle item if it's in range
+            const x = coords[2 * m];
+            const y = coords[2 * m + 1];
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY)
+                result.push(ids[m]);
+            // queue search in halves that intersect the query
+            if (axis === 0 ? minX <= x : minY <= y) {
+                stack.push(left);
+                stack.push(m - 1);
+                stack.push(1 - axis);
+            }
+            if (axis === 0 ? maxX >= x : maxY >= y) {
+                stack.push(m + 1);
+                stack.push(right);
+                stack.push(1 - axis);
+            }
+        }
+        return result;
+    }
     //# sourceMappingURL=range.js.map
 
+    function within(ids, coords, qx, qy, r, nodeSize, result = []) {
+        const stack = [0, ids.length - 1, 0];
+        const r2 = r * r;
+        // recursively search for items within radius in the kd-sorted arrays
+        while (stack.length) {
+            const axis = stack.pop();
+            const right = stack.pop();
+            const left = stack.pop();
+            // if we reached "tree node", search linearly
+            if (right - left <= nodeSize) {
+                for (let i = left; i <= right; i++) {
+                    if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2)
+                        result.push(ids[i]);
+                }
+                continue;
+            }
+            // otherwise find the middle index
+            const m = (left + right) >> 1;
+            // include the middle item if it's in range
+            const x = coords[2 * m];
+            const y = coords[2 * m + 1];
+            if (sqDist(x, y, qx, qy) <= r2)
+                result.push(ids[m]);
+            // queue search in halves that intersect the query
+            if (axis === 0 ? qx - r <= x : qy - r <= y) {
+                stack.push(left);
+                stack.push(m - 1);
+                stack.push(1 - axis);
+            }
+            if (axis === 0 ? qx + r >= x : qy + r >= y) {
+                stack.push(m + 1);
+                stack.push(right);
+                stack.push(1 - axis);
+            }
+        }
+        return result;
+    }
+    function sqDist(ax, ay, bx, by) {
+        const dx = ax - bx;
+        const dy = ay - by;
+        return dx * dx + dy * dy;
+    }
     //# sourceMappingURL=within.js.map
 
+    const defaultGetX = p => p[0];
+    const defaultGetY = p => p[1];
+    class KDBush {
+        constructor(points, getX = defaultGetX, getY = defaultGetY, nodeSize = 64, ArrayType = Float64Array) {
+            this.nodeSize = nodeSize;
+            this.points = points;
+            const IndexArrayType = points.length < 65536 ? Uint16Array : Uint32Array;
+            // store indices to the input array and coordinates in separate typed arrays
+            const ids = this.ids = new IndexArrayType(points.length);
+            const coords = this.coords = new ArrayType(points.length * 2);
+            for (let i = 0; i < points.length; i++) {
+                ids[i] = i;
+                coords[2 * i] = getX(points[i]);
+                coords[2 * i + 1] = getY(points[i]);
+            }
+            // kd-sort both arrays for efficient search (see comments in sort.js)
+            sortKD(ids, coords, nodeSize, 0, ids.length - 1, 0);
+        }
+        range(minX, minY, maxX, maxY, result = []) {
+            return range(this.ids, this.coords, minX, minY, maxX, maxY, this.nodeSize, result);
+        }
+        within(x, y, r, result = []) {
+            return within(this.ids, this.coords, x, y, r, this.nodeSize, result);
+        }
+    }
     //# sourceMappingURL=index.js.map
 
     var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -1151,6 +1368,48 @@
     }
     //# sourceMappingURL=index.js.map
 
+    class Proximity {
+        constructor(maxRadius, bodies, srcBodies = bodies) {
+            this.bodies = bodies;
+            this.srcBodies = srcBodies;
+            this.points = [];
+            this.indexMap = new Map();
+            if (typeof (maxRadius) === 'number')
+                this.maxRadius = maxRadius;
+            else
+                this.maxRadiusFn = maxRadius;
+        }
+        forEach(interFn) {
+            let points = this.points;
+            points.length = 0;
+            let indexMap = this.indexMap;
+            indexMap.clear();
+            let idx = 0;
+            for (let b of this.bodies) {
+                indexMap.set(idx, b);
+                idx++;
+                points.push(b.phys.coords);
+            }
+            let tree = new KDBush(points);
+            let r = this.maxRadius;
+            let rfn = this.maxRadiusFn;
+            let result = [];
+            for (let b of this.srcBodies) {
+                result.length = 0;
+                let pt = b.phys.coords;
+                if (rfn != null)
+                    r = rfn(b);
+                tree.within(pt[0], pt[1], r, result);
+                if (result.length !== 0) {
+                    for (let i of result) {
+                        let other = nonNull(indexMap.get(i), 'body by index');
+                        if (other !== b)
+                            interFn(b, other);
+                    }
+                }
+            }
+        }
+    }
     class CollideProps {
         constructor(_b, size) {
             this._b = _b;
@@ -1218,163 +1477,6 @@
     //# sourceMappingURL=detector.js.map
 
     //# sourceMappingURL=phys.js.map
-
-    class Loggers {
-        constructor() {
-            this._handlers = [];
-            this.add('console');
-        }
-        add(prefix, handler = console.log) {
-            this._handlers.push([prefix, handler]);
-            return this;
-        }
-        get(name = 'console') {
-            const pair = this._handlers.find((p) => name.startsWith(p[0]));
-            return pair ? [pair[1], true] : [emptyLoggerFn, false];
-        }
-    }
-    function emptyLoggerFn() {
-        // do nothing
-    }
-    function loggers() {
-        const glob = (window || global);
-        let cfg = glob.__GLOBAL_LOGGERS_CONFIG__;
-        if (cfg === undefined) {
-            cfg = new Loggers();
-            glob.__GLOBAL_LOGGERS_CONFIG__ = cfg;
-        }
-        return cfg;
-    }
-    //# sourceMappingURL=logger.js.map
-
-    function newPerfTimer(name) { return new PerfTimerImpl(name); }
-    class PerfTimerImpl {
-        constructor(name) {
-            this.name = name;
-            this.dur = 0;
-        }
-        start() {
-            this.t1 = performance.now();
-        }
-        restart() {
-            this.dur = 0;
-            this.start();
-        }
-        stop() {
-            this.dur += (performance.now() - this.t1);
-            this.t1 = 0;
-        }
-        toString() {
-            return `Duration ${this.name} = ${this.dur} ms`;
-        }
-    }
-    //# sourceMappingURL=perftimer.js.map
-
-    const [trace, isTrace] = loggers().get('');
-    class RectBody {
-        constructor(w) {
-            this.w = w;
-            let r = w.rng.number(10, 40);
-            let r1 = w.rng.number(10, 40);
-            this.collide = new CollideProps(this, [r, r1]);
-            this.phys = new PointMass({
-                coords: w.rngCoords(),
-                mass: r * r1 / 80,
-                vel: [1, 0]
-            });
-        }
-        shapeInit(two) {
-            let rng = this.w.rng;
-            //let r = two.makeCircle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0]);
-            let r = two.makeRectangle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0], this.collide.size[1]);
-            this.shape = r;
-            r.linewidth = rng.int(1, 2);
-            r.noStroke();
-            r.fill = rng.colorRgb();
-        }
-        shapeUpdate(two) {
-            let t = this.shape.translation;
-            //console.log("PHYS", this.phys.coords, this.phys.vel)
-            let [x, y] = this.phys.coords;
-            t.set(this.phys.coords[0], this.phys.coords[1]);
-        }
-        onBeforeMove(p) {
-        }
-    }
-    let collisionScene = {
-        defaultProps: {
-            x: 1, y: 2
-        },
-        uiState: {
-            title: 'Rectangles collide',
-            actions: {
-                fuck() { console.log('say fuck'); }
-            }
-        },
-        run() {
-            let elem = document.getElementById('sceneDrawingContainer');
-            console.log('elem', elem);
-            let width = 400, height = 400;
-            let two = new Two__default({ width, height, type: Two.Types.canvas }).appendTo(elem);
-            runSceneCollide(two, {
-                bodies: 300,
-                w: width, h: height
-            });
-        }
-    };
-    function runSceneCollide(two, opts) {
-        let N = 200;
-        let w = new World({
-            size: [opts.w, opts.h]
-        });
-        w.massCoef = 5;
-        w.velModifier = VelMods.compose(VelMods.friction(0.4, 0.01), VelMods.limit(0, 5, w.rng));
-        for (let i = 0; i < N; i++) {
-            let b = new RectBody(w);
-            w.add(b);
-            b.shapeInit(two);
-        }
-        w.addInteraction({
-            interact: impulseCollide(w.rng),
-            detect: new RectCollisions(w, w.bodies)
-        });
-        let tStep = newPerfTimer('step'), tDraw = newPerfTimer('draw');
-        two.bind('update', () => {
-            let dt = (two.timeDelta || 16.0) / 16;
-            tStep.start();
-            w.nextStep(dt);
-            tStep.stop();
-            tDraw.start();
-            for (let _b of w.bodies) {
-                let b = _b;
-                b.shapeUpdate(two);
-            }
-            tDraw.stop();
-            if (w.step % 10 === 0) {
-                trace(tStep, tDraw);
-            }
-        }).play();
-    }
-    function impulseCollide(rng, coef = 1) {
-        let r = create();
-        let collide = new ElasticCollideCalc(rng);
-        return (a, b) => {
-            let ok = intersect(a.collide.box, b.collide.box, r);
-            if (!ok) {
-                console.log('rects do not intersect', a.phys.id, b.phys.id);
-                return;
-            }
-            let s = area(r);
-            let skmax = 0.005;
-            if (s / area(a.collide.box) < skmax && s / area(b.collide.box) < skmax) {
-                collide.central(a.phys, b.phys);
-            }
-            else {
-                collide.central(a.phys, b.phys);
-            }
-        };
-    }
-    //# sourceMappingURL=collisions.js.map
 
     /** Detect free variable `global` from Node.js. */
     var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -19284,12 +19386,15 @@
      */
 
     function runScene(sc) {
-        new SceneUI().runScene(sc);
+        SceneUI.obj.runScene(sc);
     }
     /**
      * Singleton.
      */
     class SceneUI {
+        static get obj() {
+            return SceneUI._obj ? SceneUI._obj : (SceneUI._obj = new SceneUI());
+        }
         constructor() {
             let el = (id) => nonNull(document.getElementById(id));
             this._titleEl = el('sceneTitle');
@@ -19323,7 +19428,7 @@
             if (!this.props) {
                 this.props = this._loadProps() || scene.defaultProps;
             }
-            scene.run(this);
+            scene.run();
         }
         resetState(state) {
             if (this._buttonsEl.childNodes.length !== 0) {
@@ -19360,8 +19465,196 @@
     }
     //# sourceMappingURL=ui.js.map
 
-    window.addEventListener('DOMContentLoaded', function () {
-        runScene(collisionScene);
+    const commonProps = {
+        world: {
+            size: [500, 500],
+            dt: 0.07,
+            steps: 1,
+            massCoef: 0.1
+        },
+        dotsDef: {
+            total: 1400,
+            r: 4
+        },
+        rfCoef: 1.2,
+        rfSelfCoef: 0.015,
+        proximity: 23
+    };
+    const scene = {
+        uiState: {
+            title: 'Repulsion Patterns',
+            actions: {
+                Stop: () => {
+                }
+            }
+        },
+        defaultProps: Object.assign({}, commonProps, { dots: [{ color: 'red' }, { color: 'black' }, { color: 'lightgray' }] }),
+        presetProps: {
+            'Two Sorts': Object.assign({}, commonProps, { dots: [{ color: 'red' }, { color: 'black' }] })
+        },
+        run() {
+            let props = SceneUI.obj.props;
+            let elem = document.getElementById('sceneDrawingContainer');
+            console.log('elem', elem);
+            let [width, height] = props.world.size;
+            let two = new Two__default({ width, height, type: Two.Types.canvas }).appendTo(elem);
+            runSceneProximal(two, props);
+        }
+    };
+    class TheBody {
+        constructor(opts) {
+            this.id = 0;
+            this.isNew = false;
+            this.color = opts.color;
+            let r = this.r = opts.radius;
+            this.collide = new CollideProps(this, [r, r]);
+            this.phys = new PointMass({
+                coords: world.rngCoords(),
+                vel: scaleBy(setRand1(world.rng, create$2()), 2),
+                mass: r * r / 80
+            });
+        }
+        shapeInit(two) {
+            let r = two.makeCircle(this.phys.coords[0], this.phys.coords[1], this.r);
+            // let r = two.makeRectangle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0], this.collide.size[1])
+            this.shape = r;
+            r.noStroke();
+            r.fill = this.color;
+        }
+        shapeUpdate(two) {
+            if (!this.shape) {
+                this.shapeInit(two);
+            }
+            let t = this.shape.translation;
+            // console.log("PHYS", this.phys.coords, this.phys.vel)
+            let [x, y] = this.phys.coords;
+            if (isNaN(x) || isNaN(y)) {
+                console.log('NaN bode = ', this.id, this.phys.coords, this.phys.vel, this.phys.force);
+            }
+            t.set(this.phys.coords[0], this.phys.coords[1]);
+        }
+        onBeforeMove(p) {
+        }
+    }
+    let collideSet = new Set();
+    let world;
+    function runSceneProximal(two, props) {
+        let w = new World({
+            size: props.world.size
+        });
+        world = w;
+        w.massCoef = props.world.massCoef;
+        w.velModifier = VelMods.compose(VelMods.friction(0, 0.0001), VelMods.friction(1, 0.1));
+        let nonCollidingBodies = filterViewCast(w.bodies, (b) => !collideSet.has(b.phys.id));
+        for (let d of props.dots) {
+            let n = toInt32(d.count || (props.dotsDef.total / props.dots.length));
+            console.log("dots group: ", n, d);
+            while (n-- > 0) {
+                let b = new TheBody({
+                    color: d.color,
+                    radius: d.r || props.dotsDef.r
+                });
+                w.add(b);
+                b.shapeInit(two);
+            }
+        }
+        w.addInteraction({
+            before() {
+                collideSet.clear();
+            },
+            detect: new RectCollisions(w, w.bodies),
+            interact: impulseCollide(w.rng)
+        });
+        w.addInteraction({
+            detect: new Proximity(props.proximity, nonCollidingBodies),
+            interact: vanDerVaals(w.rng, props),
+        });
+        two.bind('update', () => {
+            let dt = props.world.dt;
+            for (let s = 0; s < 1; s++) {
+                w.nextStep(dt);
+            }
+            for (let _b of w.bodies) {
+                let b = _b;
+                b.shapeUpdate(two);
+            }
+        }).play();
+    }
+    function vanDerVaals(rng, props) {
+        let mf = new MutualForce(rng);
+        let rf = -props.rfCoef;
+        let rfSefl = -props.rfSelfCoef;
+        return (a, b) => {
+            mf.init(a, b);
+            let d = mf.dist;
+            if (a.color !== b.color) {
+                mf.apply(rf); // -04
+            }
+            else if (d < 5) {
+                mf.apply(rfSefl);
+            }
+        };
+    }
+    let distVec = create$2();
+    function impulseCollide(rng) {
+        let r = create();
+        let mf = new MutualForce(rng);
+        let collide = new ElasticCollideCalc(rng);
+        return (a, b) => {
+            let ok = intersect(a.collide.box, b.collide.box, r);
+            subtract$1(distVec, a.phys.coords, b.phys.coords);
+            let d = (a.r + b.r) - len$1(distVec);
+            if (d < -0.2) {
+                return;
+            }
+            if (d < 0.5) {
+                collide.nonCentral(a.phys, b.phys);
+            }
+            else {
+                collideSet.add(a.id).add(b.id);
+                collide.central(a.phys, b.phys);
+                mf.init(a, b);
+                mf.apply(-0.5);
+                //collide.central(a.phys, b.phys)
+            }
+            //g.add(a.id, b.id)
+        };
+    }
+    /*
+
+    {
+      "world": {
+        "size": [
+          800,
+          300
+        ],
+        "dt": 0.1,
+        "steps": 1,
+        "massCoef": 0.4
+      },
+      "dotsDef": {
+        "total": 2500,
+        "r": 2
+      },
+      "rfCoef": 1.2,
+      "rfSelfCoef": 0.1,
+      "proximity": 23,
+      "dots": [
+        {
+          "color": "brown"
+        },
+        {
+          "color": "green"
+        },
+        {
+          "color": "orange"
+        }
+      ]
+    }
+    */
+
+    window.addEventListener('DOMContentLoaded', () => {
+        runScene(scene);
     }, true);
     //# sourceMappingURL=index.js.map
 
