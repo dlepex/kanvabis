@@ -14,6 +14,7 @@ import Two from 'two'
 import { Types as TwoTypes } from 'two'
 import { Events, Shape } from 'two'
 
+import { evalProp, setSceneExprEval } from './scene'
 import { Scene, SceneUI } from './ui'
 
 interface Props {
@@ -137,6 +138,10 @@ export function runSceneProximal(two: Two, props: Props) {
   let w = new World({
     size: props.world.size
   })
+  setSceneExprEval({
+    rng: w.rng,
+    math: Math
+  })
   world = w
   w.massCoef = props.world.massCoef
   w.velModifier = VelMods.compose(VelMods.friction(0, 0.0001), VelMods.friction(1, 0.1))
@@ -148,8 +153,8 @@ export function runSceneProximal(two: Two, props: Props) {
     console.log("dots group: ", n, d)
     while (n-- > 0) {
       let b = new TheBody({
-        color: d.color,
-        radius: d.r || props.dotsDef.r!!
+        color: evalProp(d.color),
+        radius: evalProp(props.dotsDef.r) || d.r!!
       })
       w.add(b)
       b.shapeInit(two)
@@ -227,40 +232,3 @@ function impulseCollide(rng: Random): InteractFn {
     //g.add(a.id, b.id)
   }
 }
-
-function color(r: number, g: number, b: number): string {
-  return 'rgb(' + (Math.floor(r * 256)) + ',' + (Math.floor(g * 256)) + ',' + (Math.floor(b * 256)) + ')'
-}
-
-/*
-
-{
-  "world": {
-    "size": [
-      800,
-      300
-    ],
-    "dt": 0.1,
-    "steps": 1,
-    "massCoef": 0.4
-  },
-  "dotsDef": {
-    "total": 2500,
-    "r": 2
-  },
-  "rfCoef": 1.2,
-  "rfSelfCoef": 0.1,
-  "proximity": 23,
-  "dots": [
-    {
-      "color": "brown"
-    },
-    {
-      "color": "green"
-    },
-    {
-      "color": "orange"
-    }
-  ]
-}
-*/

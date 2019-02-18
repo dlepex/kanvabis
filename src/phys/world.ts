@@ -7,7 +7,6 @@ import * as Vec from 'math/vec2'
 import { Body, BodyResolverFn, CoordMods, CoordsModFn, ID, MoveParams, PhysProps, PointMass, VelModFn, _Movable } from './body'
 import { InterLauncher, InteractFn, Interaction, interLauncher } from './interact'
 
-
 type DeleteListener = (b: Body) => void
 
 export class World {

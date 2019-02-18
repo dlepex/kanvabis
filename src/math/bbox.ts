@@ -28,9 +28,9 @@ export function intersect(a: BoundaryBox, b: BoundaryBox, out?: BoundaryBox): bo
 }
 
 export function setCenter(out: BoundaryBox, x: number, y: number, w: number, h: number) {
-  w = w / 2
-  h = h / 2
-  set(out, x - w, y - h, x + w, y + h)
+  let ww = w / 2
+  let hh = h / 2
+  set(out, x - ww, y - hh, x + ww, y + hh)
 }
 
 export function setCenterVec(out: BoundaryBox, c: vec2, size: vec2) {

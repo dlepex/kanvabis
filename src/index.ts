@@ -11,4 +11,5 @@ import { Types as TwoTypes } from 'two'
 
 window.addEventListener('DOMContentLoaded', () => {
   ui.runScene(proximalScene)
+
 }, true)

@@ -6,6 +6,7 @@ typings/
 
 dist
 build/
+public/build/
 coverage
 ts-out
 npm-debug.log
