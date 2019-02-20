@@ -6,24 +6,32 @@ export type RngFn = () => number
 // "rich random"
 export class Random {
 
-  constructor(public rfn: RngFn = Math.random) { }
+  constructor(public random: RngFn = Math.random) { }
 
-  /** from <= result < to */
-  number(from: int, to: int): int {
-    return from + this.rfn() * (to - from)
+  /** from <= double < to */
+  btw(from: number, to: number): number {
+    return from + this.random() * (to - from)
   }
 
-  /** from <= result < to */
-  int(from: int, to: int): int {
-    return Math.floor(from + this.rfn() * (to - from))
+  /** min <= integer <= max */
+  range(min: int, max: int): int {
+    return Math.floor(min + this.random() * (max - min + 1))
+  }
+
+  avg(center: number, delta: number): number {
+    return this.btw(center - delta, center + delta)
+  }
+
+  iavg(center: number, delta: number): number {
+    return this.range(center - delta, center + delta)
   }
 
   bool(): boolean {
-    return this.int(0, 2) === 0
+    return this.range(0, 1) === 1
   }
 
   colorRgb(): string {
-    let f = this.rfn
+    let f = this.random
     return 'rgb(' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ')'
   }
 }
