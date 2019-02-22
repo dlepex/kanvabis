@@ -1,3 +1,4 @@
+import * as chroma from 'chroma-js'
 import { filterViewCast } from 'commons/collections'
 import { int, toInt32 } from 'commons/types'
 import { dot } from 'gl-matrix/src/gl-matrix/quat'
@@ -14,7 +15,7 @@ import Two from 'two'
 import { Types as TwoTypes } from 'two'
 import { Events, Shape } from 'two'
 
-import { evalProp, setSceneExprEval } from './scene'
+import { evalProp } from './scene'
 import { Scene, SceneUI } from './ui'
 
 interface Props {
@@ -138,10 +139,6 @@ export function runSceneProximal(two: Two, props: Props) {
   let w = new World({
     size: props.world.size
   })
-  setSceneExprEval({
-    rng: w.rng,
-    math: Math
-  })
   world = w
   w.massCoef = props.world.massCoef
   w.velModifier = VelMods.compose(VelMods.friction(0, 0.0001), VelMods.friction(1, 0.1))
@@ -204,7 +201,6 @@ function vanDerVaals(rng: Random, props: Props): InteractFn {
     }
   }
 }
-
 let distVec = Vec.create()
 function impulseCollide(rng: Random): InteractFn {
   let r = brect.create()

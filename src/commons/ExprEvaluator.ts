@@ -5,13 +5,15 @@ export class ExprEvaluator {
   _values: any[]
   _cache = new Map<string, () => any>()
 
-  constructor(private _ctx: { [k: string]: any }) {
-    this._keys = Object.keys(_ctx)
-    this._values = this._keys.map(k => _ctx[k])
+  constructor(ctx: { [k: string]: any }) {
+    this._keys = Object.keys(ctx)
+    this._values = this._keys.map(k => ctx[k])
   }
 
   eval(expr: string): any {
-    return computeIfAbsent(this._cache, expr, this._exprToFn)
+    let f = computeIfAbsent(this._cache, expr, e => this._exprToFn(e))
+    console.log(f)
+    return f()
   }
 
   _exprToFn(str: string): () => any {

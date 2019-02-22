@@ -23,8 +23,8 @@ class RectBody implements CollidingBody {
   constructor(w: World) {
     this.w = w
     let kind = 'rect'
-    let r = w.rng.btw(10, 40)
-    let r1 = w.rng.btw(10, 40)
+    let r = w.rng.num(10, 40)
+    let r1 = w.rng.num(10, 40)
     this.collide = new CollideProps(this, [r, r1])
     this.phys = new PointMass({
       coords: w.rngCoords(),
@@ -38,7 +38,7 @@ class RectBody implements CollidingBody {
     //let r = two.makeCircle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0]);
     let r = two.makeRectangle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0], this.collide.size[1])
     this.shape = r
-    r.linewidth = rng.range(1, 2)
+    r.linewidth = rng.int(1, 2)
     r.noStroke()
     r.fill = rng.colorRgb()
   }

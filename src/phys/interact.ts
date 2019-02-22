@@ -198,7 +198,6 @@ export class ElasticCollideCalc {
     let dv = vec.subtract(this.dv, a.vel, b.vel)
     let dn = vec.scale(this.dn, n, 2 * vec.dot(n, dv) * (mb / m))
     vec.subtract(v, v, dn)
-
     v = b.vel
     vec.neg(n, n)
     vec.neg(dv, dv)

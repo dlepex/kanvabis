@@ -21,9 +21,10 @@ export default {
     commonjs(),
   ],
 
-  external: ['two'],
+  external: ['two', 'chroma-js'],
   globals: {
     'two': 'Two',
+    'chroma': 'chroma'
   },
 }
 

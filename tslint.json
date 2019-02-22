@@ -58,7 +58,7 @@
     "no-return-await": true,
     "no-string-throw": true,
     "no-var-keyword": true,
-    "no-parameter-reassignment": true,
+    "no-parameter-reassignment": false,
     "object-literal-sort-keys": false,
     "ordered-imports": [
       true,
