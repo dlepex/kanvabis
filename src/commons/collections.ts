@@ -24,3 +24,7 @@ export interface Bag<V> extends Iterable<V> {
   delete(v: V): boolean
   has(v: V): boolean
 }
+
+export function isObjEmpty(o: object) {
+  return Object.keys(o).length === 0
+}

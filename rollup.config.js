@@ -11,7 +11,12 @@ export default {
   output: {
     file: 'public/build/bundle.js',
     format: 'iife', // immediately-invoked function expression — suitable for <script> tags
-    sourcemap: true
+    sourcemap: true,
+    globals: {
+      'two': 'Two',
+      'chroma': 'chroma',
+      'paper': 'paper',
+    },
   },
   // production && uglify() // minify, but only in production
   plugins: [
@@ -21,11 +26,8 @@ export default {
     commonjs(),
   ],
 
-  external: ['two', 'chroma-js'],
-  globals: {
-    'two': 'Two',
-    'chroma': 'chroma'
-  },
+  external: ['two', 'chroma-js', 'paper'],
+
 }
 
 function ensureExt(fn) {

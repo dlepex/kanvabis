@@ -2,7 +2,6 @@ import * as chroma from 'chroma-js'
 import { filterViewCast } from 'commons/collections'
 import { int, toInt32 } from 'commons/types'
 import { dot } from 'gl-matrix/src/gl-matrix/quat'
-import { groupBy, head } from 'lodash-es'
 import * as brect from 'math/bbox'
 import { Random } from 'math/random'
 import { vec2 } from 'math/vec2'
@@ -15,7 +14,7 @@ import Two from 'two'
 import { Types as TwoTypes } from 'two'
 import { Events, Shape } from 'two'
 
-import { SceneBase } from './ui'
+import { SceneBase } from './scene'
 
 interface Props {
   canvas: {
@@ -57,7 +56,7 @@ const commonProps = {
   proximity: 23
 }
 
-export class Scene extends SceneBase {
+export class RepulsionScene extends SceneBase {
   constructor() {
     super({
       uiState: {
@@ -84,7 +83,6 @@ export class Scene extends SceneBase {
     let elem = document.getElementById('sceneDrawingContainer')
     console.log('elem', elem)
     let [width, height] = [props.canvas.w, props.canvas.h]
-    let two = new Two({ width, height, type: TwoTypes.canvas }).appendTo(elem!)
     this.runSceneProximal(two, props)
   }
 

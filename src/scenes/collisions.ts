@@ -1,28 +1,24 @@
 import { loggers } from 'commons/logger'
 import { newPerfTimer, newPerfTimerDisabled } from 'commons/perftimer'
+import * as Paper from 'draw/paperUtils'
 import * as brect from 'math/bbox'
 import { Random } from 'math/random'
 import { vec2 } from 'math/vec2'
 import * as vec from 'math/vec2'
+import * as paper from 'paper'
 import { MoveParams, VelMods } from 'phys/body'
 import { InteractFn, MutualForce } from 'phys/phys'
 import { Body, CollideProps, CollidingBody, ElasticCollideCalc, PhysProps, PointMass, RectCollisions, World } from 'phys/phys'
-import * as ui from 'scenes/ui'
-import Two from 'two'
-import { Shape } from 'two'
-import { Types as TwoTypes } from 'two'
-
-import { rngColor } from './scene'
+import * as ui from 'scenes/scene'
 
 const [trace, isTrace] = loggers().get('')
 
 class RectBody implements CollidingBody {
   collide: CollideProps
   phys: PhysProps
-  shape: Shape
-  w: World
+  shape: paper.Path.Rectangle
 
-  constructor(w: World) {
+  constructor(private w: World, private scene: ui.SceneBase) {
     this.w = w
     let kind = 'rect'
     let r = w.rng.num(10, 40)
@@ -33,26 +29,20 @@ class RectBody implements CollidingBody {
       mass: r * r1 / 80,
       vel: [1, 0]
     })
+
+    let corner = vec.subtract(vec.create(), this.phys.coords, [r / 2, r1 / 2])
+    this.shape = new paper.Path.Rectangle(Paper.toPoint(corner), Paper.toSize(this.collide.size))
+    this.shape.fillColor = this.scene.rngColor.any()
   }
 
-  shapeInit(two: Two) {
-    let rng = this.w.rng
-    //let r = two.makeCircle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0]);
-    let r = two.makeRectangle(this.phys.coords[0], this.phys.coords[1], this.collide.size[0], this.collide.size[1])
-    this.shape = r
-    r.linewidth = rng.int(1, 2)
-    r.noStroke()
-    r.fill = rngColor.any()
-  }
+  shapeUpdate() {
 
-  shapeUpdate(two: Two) {
-    let t = this.shape.translation
     //console.log("PHYS", this.phys.coords, this.phys.vel)
     let [x, y] = this.phys.coords
     if (isNaN(x) || isNaN(y)) {
       //console.log("NaN bode = ", this.id, this.phys.coords, this.phys.vel, this.phys.force)
     }
-    t.set(this.phys.coords[0], this.phys.coords[1])
+    this.shape.position = Paper.toPoint(this.phys.coords)
   }
 
   onBeforeMove(p: MoveParams) {
@@ -60,72 +50,50 @@ class RectBody implements CollidingBody {
   }
 }
 
-export class Scene extends ui.SceneBase {
+export class CollideScene extends ui.SceneBase<ui.BaseSceneProps> {
+  w: World
   constructor() {
     super({
       defaultProps: {
-        x: 1, y: 2
+        canvas: {
+          w: 300,
+          h: 600,
+        }
       },
       uiState: {
         title: 'Rectangles collide',
         actions: {
-          fuck() { console.log('say fuck') }
+          Stop() {
+            this.stopOnFrame()
+          }
         }
       }
     })
   }
+  onFrame = () => {
+    console.log(this.w.bodies)
+    for (let _b of this.w.bodies) {
+      let b: RectBody = _b as any
+      b.shapeUpdate()
+    }
+  }
   run() {
-    let elem = document.getElementById('sceneDrawingContainer')
-    console.log('elem', elem)
-    let width = 400, height = 400
-    let two = new Two({ width, height, type: TwoTypes.canvas }).appendTo(elem!)
-    runSceneCollide(two, {
-      bodies: 300,
-      w: width, h: height
+    let w = this.w = new World({
+      size: [this.props.canvas.w, this.props.canvas.h]
+    })
+    console.log(this.props)
+    let N = 100
+    w.massCoef = 0.1
+    w.velModifier = VelMods.compose(VelMods.friction(0.4, 0.01), VelMods.limit(0, 5, w.rng))
+    for (let i = 0; i < N; i++) {
+      let b = new RectBody(w, this)
+      w.add(b)
+    }
+    w.addInteraction({
+      interact: impulseCollide(w.rng),
+      detect: new RectCollisions(w, w.bodies)
     })
   }
-}
-
-function runSceneCollide(two: Two, opts: {
-  bodies?: number,
-  w: number, h: number
-}) {
-
-  let N = 200
-  let w = new World({
-    size: [opts.w, opts.h]
-  })
-  w.massCoef = 5
-  w.velModifier = VelMods.compose(VelMods.friction(0.4, 0.01), VelMods.limit(0, 5, w.rng))
-  for (let i = 0; i < N; i++) {
-    let b = new RectBody(w)
-    w.add(b)
-    b.shapeInit(two)
-  }
-
-  w.addInteraction({
-    interact: impulseCollide(w.rng),
-    detect: new RectCollisions(w, w.bodies)
-  })
-  let tStep = newPerfTimer('step'), tDraw = newPerfTimer('draw')
-
-  two.bind('update' as any, () => {
-
-    let dt = (two.timeDelta || 16.0) / 16
-
-    tStep.start()
-    w.nextStep(dt)
-    tStep.stop()
-    tDraw.start()
-    for (let _b of w.bodies) {
-      let b: RectBody = _b as any
-      b.shapeUpdate(two)
-    }
-    tDraw.stop()
-    if (w.step % 10 === 0) {
-      trace(tStep, tDraw)
-    }
-  }).play()
 }
 
 function impulseCollide(rng: Random, coef = 1): InteractFn {

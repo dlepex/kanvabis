@@ -1,20 +1,28 @@
 import * as chroma from 'chroma-js'
+import { isObjEmpty } from 'commons/collections'
 import { ExprEvaluator } from "commons/ExprEvaluator"
 import { Maybe, Undef, int, jsonStr, nonNull } from 'commons/prelude'
-import * as _ from 'lodash-es'
 import { Random } from "math/random"
 import * as RR from "math/random"
 import { RandomColor } from 'math/randomColor'
 
-export abstract class SceneBase {
+export abstract class SceneBase<P extends object = object> {
   readonly rng = new Random()
   readonly rngColor = new RandomColor(this.rng)
-  _evalCtx = { rng: this.rng, rngColor: this.rngColor, chroma, Math }
+  _evalCtx = { rng: this.rng, rngColor: this.rngColor, chroma, Math, me: this }
   _eval = new ExprEvaluator(this._evalCtx)
+  _props: P
+  frameCount: int = 0
   readonly ui: SceneUI
+  onFrame?: () => void
 
-  constructor(readonly config: SceneConfig) {
+  constructor(readonly config: SceneConfig<P>) {
     this.ui = SceneUI.obj
+  }
+
+  get props(): P {
+    if (this._props) return this._props
+    return (this._props = nonNull(this.ui.props) as P)
   }
 
   evalProp<V>(propValue: V): V {
@@ -28,12 +36,23 @@ export abstract class SceneBase {
     return this._eval.eval(expr) as V
   }
 
+  stopOnFrame() {
+    (paper.view as any).onFrame = null
+  }
+
   abstract run(): void
 }
 
 interface SceneUIState {
   title: string
   actions?: { [key: string]: () => any } // btnTitle -> onlick handler.
+}
+
+export interface BaseSceneProps {
+  canvas: {
+    w: int,
+    h: int,
+  },
 }
 
 export interface SceneConfig<P = object> {
@@ -59,6 +78,7 @@ class SceneUI {
   _statLine: HTMLElement
   _editor: any // JSONEditor
   _scene: SceneBase
+  _canvas: HTMLCanvasElement
 
   static get obj() {
     return SceneUI._obj ? SceneUI._obj : (SceneUI._obj = new SceneUI())
@@ -69,7 +89,7 @@ class SceneUI {
     this._titleEl = el('sceneTitle')
     this._buttonsEl = el('sceneButtons')
     this._statLine = el('sceneStatusLine')
-
+    this._canvas = el('sceneCanvas') as HTMLCanvasElement
     this._editor = new JSONEditor(el('jsonEditor'), {
       mode: 'form'
     })
@@ -88,7 +108,7 @@ class SceneUI {
 
   get props(): Maybe<object> {
     let j = this._editor.get()
-    return !_.isEmpty(j) ? j : undefined
+    return !isObjEmpty(j) ? j : undefined
   }
 
   set props(p: Maybe<object>) {
@@ -101,7 +121,23 @@ class SceneUI {
     if (!this.props) {
       this.props = this._loadProps() || scene.config.defaultProps
     }
+    this._initCanvas(this.props)
     scene.run()
+    console.log(scene)
+
+    paper.view.onFrame = scene.onFrame!!
+    paper.view.draw()
+
+  }
+
+  _initCanvas(p: any) {
+    let c = (p as BaseSceneProps).canvas
+    let [w, h] = c ? [c.w, c.h] : [400, 400]
+    this._canvas.width = w
+    this._canvas.height = h
+    paper.setup(this._canvas)
+    // paper.activate()
+    //
   }
 
   resetState(state: SceneUIState) {
@@ -136,6 +172,6 @@ class SceneUI {
     let str = window.sessionStorage.getItem(k)
     if (!str) return undefined
     let obj = JSON.parse(str)
-    return !_.isEmpty(obj) ? obj : undefined
+    return !isObjEmpty(obj) ? obj : undefined
   }
 }

@@ -7,15 +7,12 @@
     "fastpriorityqueue": "^0.6.1",
     "gl-matrix": "^2.8.1",
     "jsoneditor": "^5.28.2",
-    "lodash-es": "^4.17.11",
     "quickselect": "^1.0.1",
     "tslint": "^5.12.1"
   },
   "devDependencies": {
     "@types/chroma-js": "^1.4.1",
     "@types/gl-matrix": "^2.4.4",
-    "@types/lodash-es": "^4.17.1",
-    "@types/paper": "^0.11.9",
     "concurrently": "^2.2.0",
     "rollup": "^0.65.2",
     "rollup-plugin-commonjs": "^9.2.0",
