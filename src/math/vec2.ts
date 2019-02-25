@@ -3,7 +3,7 @@ import * as glMatrix from 'gl-matrix/src/gl-matrix/common'
 import * as vec from 'gl-matrix/src/gl-matrix/vec2'
 
 import { EPSILON } from './math'
-import { Random } from './Random'
+import { Random } from './random'
 
 export type vec2 = [number, number]
 

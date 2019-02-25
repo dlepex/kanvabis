@@ -1,6 +1,6 @@
 import { assert } from 'commons/error'
 import { castMutable, int } from 'commons/prelude'
-import { Random } from 'math/Random'
+import { Random } from 'math/random'
 import { vec2 } from 'math/vec2'
 import * as Vec from 'math/vec2'
 

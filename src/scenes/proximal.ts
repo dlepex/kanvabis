@@ -2,9 +2,9 @@ import * as chroma from 'chroma-js'
 import { filterViewCast } from 'commons/collections'
 import { int, toInt32 } from 'commons/types'
 import { dot } from 'gl-matrix/src/gl-matrix/quat'
-import { head } from 'lodash-es'
+import { groupBy, head } from 'lodash-es'
 import * as brect from 'math/bbox'
-import { Random } from 'math/Random'
+import { Random } from 'math/random'
 import { vec2 } from 'math/vec2'
 import * as Vec from 'math/vec2'
 import { ID, MoveParams, VelMods } from 'phys/body'
@@ -15,12 +15,14 @@ import Two from 'two'
 import { Types as TwoTypes } from 'two'
 import { Events, Shape } from 'two'
 
-import { evalProp } from './scene'
-import { Scene, SceneUI } from './ui'
+import { SceneBase } from './ui'
 
 interface Props {
+  canvas: {
+    w: int,
+    h: int,
+  },
   world: {
-    size: vec2
     dt: number
     steps: int
     massCoef: number
@@ -40,8 +42,8 @@ interface Props {
 }
 
 const commonProps = {
+  canvas: { w: 500, h: 500 },
   world: {
-    size: [500, 500] as vec2,
     dt: 0.07,
     steps: 1,
     massCoef: 0.1
@@ -55,36 +57,88 @@ const commonProps = {
   proximity: 23
 }
 
-export const scene: Scene<Props> = {
-  uiState: {
-    title: 'Repulsion Patterns',
-    actions: {
-      Stop: () => {
-
+export class Scene extends SceneBase {
+  constructor() {
+    super({
+      uiState: {
+        title: 'Repulsion Patterns',
+        actions: {
+          Stop: () => {
+          }
+        }
+      },
+      defaultProps: {
+        ...commonProps,
+        dots: [{ color: 'red' }, { color: 'black' }, { color: 'lightgray' }]
+      },
+      presetProps: {
+        'Two Sorts': {
+          ...commonProps,
+          dots: [{ color: 'red' }, { color: 'black' }]
+        }
       }
-    }
-  },
-  defaultProps: {
-    ...commonProps,
-    dots: [{ color: 'red' }, { color: 'black' }, { color: 'lightgray' }]
-  },
-  presetProps: {
-    'Two Sorts': {
-      ...commonProps,
-      dots: [{ color: 'red' }, { color: 'black' }]
-    }
-  },
+    })
+  }
   run() {
-    let props: Props = SceneUI.obj.props as any
+    let props: Props = this.ui.props as any
     let elem = document.getElementById('sceneDrawingContainer')
     console.log('elem', elem)
-    let [width, height] = props.world.size
+    let [width, height] = [props.canvas.w, props.canvas.h]
     let two = new Two({ width, height, type: TwoTypes.canvas }).appendTo(elem!)
-    runSceneProximal(two, props)
+    this.runSceneProximal(two, props)
+  }
+
+  runSceneProximal(two: Two, props: Props) {
+
+    let w = new World({
+      size: [props.canvas.w, props.canvas.h]
+    })
+    world = w
+    w.massCoef = props.world.massCoef
+    w.velModifier = VelMods.compose(VelMods.friction(0, 0.0001), VelMods.friction(1, 0.1))
+
+    let nonCollidingBodies: Iterable<Dot> = filterViewCast(w.bodies, (b) => !collideSet.has(b.phys.id))
+
+    props.dots.forEach((d, group) => {
+      let n = toInt32(d.count || (props.dotsDef.total!! / props.dots.length))
+      console.log("dots group: ", n, d)
+      while (n-- > 0) {
+        let b = new Dot({
+          group,
+          color: this.evalProp(d.color),
+          radius: this.evalProp(props.dotsDef.r) || d.r!!
+        })
+        w.add(b)
+        b.shapeInit(two)
+      }
+    })
+    w.addInteraction({
+      before() {
+        collideSet.clear()
+      },
+      detect: new RectCollisions(w, w.bodies),
+      interact: impulseCollide(w.rng)
+    })
+    w.addInteraction({
+      detect: new Proximity(props.proximity, nonCollidingBodies), //new Proximity(30, nonCollidingBodies),
+      interact: vanDerVaals(w.rng, props),
+    })
+
+    two.bind('update' as any, () => {
+      let dt = props.world.dt
+      for (let s = 0; s < 1; s++) {
+        w.nextStep(dt)
+      }
+
+      for (let _b of w.bodies) {
+        let b: Dot = _b as any
+        b.shapeUpdate(two)
+      }
+    }).play()
   }
 }
 
-class TheBody implements CollidingBody {
+class Dot implements CollidingBody {
   id = 0
   collideSize: Vec.vec2
   collide: CollideProps
@@ -93,10 +147,12 @@ class TheBody implements CollidingBody {
   r: number
 
   color: string
+  group: int
   isNew = false
 
-  constructor(opts: { color: string, radius: int }) {
+  constructor(opts: { color: string, radius: int, group: int }) {
     this.color = opts.color
+    this.group = opts.group
     let r = this.r = opts.radius
     this.collide = new CollideProps(this, [r, r])
     this.phys = new PointMass({
@@ -134,69 +190,16 @@ class TheBody implements CollidingBody {
 let collideSet = new Set<ID>()
 let world: World
 
-export function runSceneProximal(two: Two, props: Props) {
-
-  let w = new World({
-    size: props.world.size
-  })
-  world = w
-  w.massCoef = props.world.massCoef
-  w.velModifier = VelMods.compose(VelMods.friction(0, 0.0001), VelMods.friction(1, 0.1))
-
-  let nonCollidingBodies: Iterable<TheBody> = filterViewCast(w.bodies, (b) => !collideSet.has(b.phys.id))
-
-  for (let d of props.dots) {
-    let n = toInt32(d.count || (props.dotsDef.total!! / props.dots.length))
-    console.log("dots group: ", n, d)
-    while (n-- > 0) {
-      let b = new TheBody({
-        color: evalProp(d.color),
-        radius: evalProp(props.dotsDef.r) || d.r!!
-      })
-      w.add(b)
-      b.shapeInit(two)
-    }
-  }
-
-  w.addInteraction({
-    before() {
-      collideSet.clear()
-    },
-    detect: new RectCollisions(w, w.bodies),
-    interact: impulseCollide(w.rng)
-  })
-
-  w.addInteraction({
-    detect: new Proximity(props.proximity, nonCollidingBodies), //new Proximity(30, nonCollidingBodies),
-    interact: vanDerVaals(w.rng, props),
-  })
-
-  two.bind('update' as any, () => {
-
-    let dt = props.world.dt
-
-    for (let s = 0; s < 1; s++) {
-      w.nextStep(dt)
-    }
-
-    for (let _b of w.bodies) {
-      let b: TheBody = _b as any
-      b.shapeUpdate(two)
-    }
-  }).play()
-
-}
-
 function vanDerVaals(rng: Random, props: Props): InteractFn {
   let mf = new MutualForce(rng)
   let rf = -props.rfCoef
   let rfSefl = -props.rfSelfCoef
-  return (a: TheBody, b: TheBody) => {
+  return (a: Dot, b: Dot) => {
     mf.init(a, b)
     let d = mf.dist
-    if (a.color !== b.color) {
+    if (a.group !== b.group) {
       mf.apply(rf)  // -04
-    } else if (d < 5) {
+    } else {
       mf.apply(rfSefl)
     }
   }
@@ -206,7 +209,7 @@ function impulseCollide(rng: Random): InteractFn {
   let r = brect.create()
   let mf = new MutualForce(rng)
   let collide = new ElasticCollideCalc(rng)
-  return (a: TheBody, b: TheBody) => {
+  return (a: Dot, b: Dot) => {
     let ok = brect.intersect(a.collide.box, b.collide.box, r)
 
     Vec.subtract(distVec, a.phys.coords, b.phys.coords)

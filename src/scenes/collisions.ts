@@ -1,7 +1,7 @@
 import { loggers } from 'commons/logger'
 import { newPerfTimer, newPerfTimerDisabled } from 'commons/perftimer'
 import * as brect from 'math/bbox'
-import { Random } from 'math/Random'
+import { Random } from 'math/random'
 import { vec2 } from 'math/vec2'
 import * as vec from 'math/vec2'
 import { MoveParams, VelMods } from 'phys/body'
@@ -9,8 +9,10 @@ import { InteractFn, MutualForce } from 'phys/phys'
 import { Body, CollideProps, CollidingBody, ElasticCollideCalc, PhysProps, PointMass, RectCollisions, World } from 'phys/phys'
 import * as ui from 'scenes/ui'
 import Two from 'two'
-import { Events, Shape } from 'two'
+import { Shape } from 'two'
 import { Types as TwoTypes } from 'two'
+
+import { rngColor } from './scene'
 
 const [trace, isTrace] = loggers().get('')
 
@@ -40,7 +42,7 @@ class RectBody implements CollidingBody {
     this.shape = r
     r.linewidth = rng.int(1, 2)
     r.noStroke()
-    r.fill = rng.colorRgb()
+    r.fill = rngColor.any()
   }
 
   shapeUpdate(two: Two) {
@@ -58,16 +60,20 @@ class RectBody implements CollidingBody {
   }
 }
 
-export let collisionScene: ui.Scene = {
-  defaultProps: {
-    x: 1, y: 2
-  },
-  uiState: {
-    title: 'Rectangles collide',
-    actions: {
-      fuck() { console.log('say fuck') }
-    }
-  },
+export class Scene extends ui.SceneBase {
+  constructor() {
+    super({
+      defaultProps: {
+        x: 1, y: 2
+      },
+      uiState: {
+        title: 'Rectangles collide',
+        actions: {
+          fuck() { console.log('say fuck') }
+        }
+      }
+    })
+  }
   run() {
     let elem = document.getElementById('sceneDrawingContainer')
     console.log('elem', elem)

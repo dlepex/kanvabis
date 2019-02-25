@@ -11,7 +11,7 @@ export function castMutable<T extends {}>(o: T) { return (o as Mutable<T>) }
 /** for extra clarity */
 export type int = number
 
-export interface Constructor<T> extends Function { new(...args: any[]): T }
+export type Constructor<T> = new (...args: any[]) => T
 
 export function toInt32(v: string | number | boolean): int {
   return v as any >> 0

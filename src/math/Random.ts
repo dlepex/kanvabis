@@ -1,5 +1,5 @@
 
-import { int } from 'commons/prelude'
+import { assert, int } from 'commons/prelude'
 
 export type RngFn = () => number
 
@@ -12,25 +12,36 @@ export class Random {
     return from + this.get() * (to - from)
   }
 
-  /** min <= integer <= max */
-  int(min: int, max: int): int {
+  int(from: int, to: int): int {
+    return Math.floor(from + this.get() * (from - to))
+  }
+
+  pick<T>(a: ArrayLike<T>): T {
+    let len = a.length
+    assert(len > 0, "")
+    if (len === 1) return a[0]
+    return a[this.int(0, len)]
+  }
+
+  /**
+   * intc - Closed interval random integer.
+   */
+  intc(min: int, max: int): int {
     return Math.floor(min + this.get() * (max - min + 1))
   }
 
-  avg(center: number, delta: number): number {
+  /**
+   * a - "around"
+   */
+  numa(center: number, delta: number): number {
     return this.num(center - delta, center + delta)
   }
 
-  iavg(center: number, delta: number): number {
-    return this.int(center - delta, center + delta)
+  inta(center: number, delta: number): number {
+    return this.intc(center - delta, center + delta)
   }
 
   bool(): boolean {
-    return this.int(0, 1) === 1
-  }
-
-  colorRgb(): string {
-    let f = this.get
-    return 'rgb(' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ',' + (Math.floor(f() * 256)) + ')'
+    return this.get() < 0.5
   }
 }

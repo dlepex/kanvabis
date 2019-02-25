@@ -1,6 +1,6 @@
 import { IDSet } from 'commons/IdSet'
 import { Undef, int } from 'commons/prelude'
-import { Random } from 'math/Random'
+import { Random } from 'math/random'
 import { vec2 } from 'math/vec2'
 import * as vec from 'math/vec2'
 export type ID = int

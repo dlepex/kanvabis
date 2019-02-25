@@ -1,6 +1,6 @@
 import { assert, int, nonNull } from 'commons/prelude'
 import * as brect from 'math/bbox'
-import { Random } from 'math/Random'
+import { Random } from 'math/random'
 import { vec2 } from 'math/vec2'
 import * as vec from 'math/vec2'
 import KDBush from 'vendor/kdbush/index.js'
