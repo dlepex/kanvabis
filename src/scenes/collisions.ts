@@ -70,14 +70,14 @@ export class CollideScene extends ui.SceneBase<ui.BaseSceneProps> {
       }
     })
   }
-  onFrame = () => {
+  onFrame() {
     console.log(this.w.bodies)
-    for (let _b of this.w.bodies) {
-      let b: RectBody = _b as any
-      b.shapeUpdate()
+    for (let b of this.w.bodies) {
+      (b as RectBody).shapeUpdate()
     }
   }
-  run() {
+
+  onStart() {
     let w = this.w = new World({
       size: [this.props.canvas.w, this.props.canvas.h]
     })

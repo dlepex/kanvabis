@@ -6,6 +6,11 @@ import { Random } from "math/random"
 import * as RR from "math/random"
 import { RandomColor } from 'math/randomColor'
 
+export interface SceneBase {
+  onFrame?(): void
+  onStart?(): void
+}
+
 export abstract class SceneBase<P extends object = object> {
   readonly rng = new Random()
   readonly rngColor = new RandomColor(this.rng)
@@ -14,7 +19,6 @@ export abstract class SceneBase<P extends object = object> {
   _props: P
   frameCount: int = 0
   readonly ui: SceneUI
-  onFrame?: () => void
 
   constructor(readonly config: SceneConfig<P>) {
     this.ui = SceneUI.obj
@@ -39,8 +43,6 @@ export abstract class SceneBase<P extends object = object> {
   stopOnFrame() {
     (paper.view as any).onFrame = null
   }
-
-  abstract run(): void
 }
 
 interface SceneUIState {
@@ -122,12 +124,12 @@ class SceneUI {
       this.props = this._loadProps() || scene.config.defaultProps
     }
     this._initCanvas(this.props)
-    scene.run()
+    if (scene.onStart) {
+      scene.onStart()
+    }
     console.log(scene)
-
     paper.view.onFrame = scene.onFrame!!
     paper.view.draw()
-
   }
 
   _initCanvas(p: any) {
@@ -136,8 +138,6 @@ class SceneUI {
     this._canvas.width = w
     this._canvas.height = h
     paper.setup(this._canvas)
-    // paper.activate()
-    //
   }
 
   resetState(state: SceneUIState) {
