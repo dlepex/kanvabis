@@ -1,11 +1,11 @@
 
-import { assert, nonNull } from 'commons/error'
-import { MultiMap } from 'commons/MultiMap'
+import { MultiMap } from 'commons/multiMap'
+import { assert, nonNull } from 'commons/prelude'
 import { Constructor, int } from 'commons/prelude'
 import * as brect from 'math/bbox'
 import { Random } from 'math/random'
 import { vec2 } from 'math/vec2'
-import * as vec from 'math/vec2'
+import * as Vec from 'math/vec2'
 import KDBush from 'vendor/kdbush/index.js'
 
 import { Body, ID, PhysProps } from './body'
@@ -131,15 +131,15 @@ export class MutualForce {
   a: Body
   b: Body
   dist = 0
-  coordsDif: vec2 = vec.create()
+  coordsDif: vec2 = Vec.create()
 
   constructor(public rng: Random) { }
 
   init(a: Body, b: Body): this {
     this.a = a
     this.b = b
-    vec.subtract(this.coordsDif, b.phys.coords, a.phys.coords)
-    this.dist = vec.len(this.coordsDif)
+    Vec.subtract(this.coordsDif, b.phys.coords, a.phys.coords)
+    this.dist = Vec.len(this.coordsDif)
     return this
   }
 
@@ -151,56 +151,56 @@ export class MutualForce {
     let f = this.coordsDif
     let d = this.dist
     if (d !== 0) {
-      vec.scaleBy(f, scalar / this.dist)
+      Vec.scaleBy(f, scalar / this.dist)
     } else {
-      vec.scaleBy(vec.setRand1(this.rng, f), scalar)
+      Vec.scaleBy(Vec.setRand1(this.rng, f), scalar)
     }
     this.a.phys.applyForce(f)
-    vec.neg(f, f)
+    Vec.neg(f, f)
     this.b.phys.applyForce(f)
   }
 }
 
 export class ElasticCollideCalc {
-  _n: vec2 = vec.create()
-  dn: vec2 = vec.create()
-  dv: vec2 = vec.create()
+  _n: vec2 = Vec.create()
+  dn: vec2 = Vec.create()
+  dv: vec2 = Vec.create()
   constructor(public rng: Random) { }
 
-  _normalToCollisionLine(a: PhysProps, b: PhysProps, n?: vec.vec2) {
+  _normalToCollisionLine(a: PhysProps, b: PhysProps, n?: Vec.vec2) {
     if (n == null) {
-      n = vec.subtract(this._n, a.coords, b.coords) // normal to "collision line"
+      n = Vec.subtract(this._n, a.coords, b.coords) // normal to "collision line"
     } else {
-      n = vec.copy(this._n, n)
+      n = Vec.copy(this._n, n)
     }
-    if (!vec.isZero(n)) vec.normalize(n, n)
-    else vec.setRand1(this.rng, n)
+    if (!Vec.isZero(n)) Vec.normalize(n, n)
+    else Vec.setRand1(this.rng, n)
     return n
   }
 
-  central(a: PhysProps, b: PhysProps, n?: vec.vec2) {
+  central(a: PhysProps, b: PhysProps, n?: Vec.vec2) {
     n = this._normalToCollisionLine(a, b, n)
 
-    let va = vec.len(a.vel), vb = vec.len(b.vel)
+    let va = Vec.len(a.vel), vb = Vec.len(b.vel)
     let ma = a.mass, mb = b.mass, m = ma + mb, dm = ma - mb
     // result speeds after collision
     let ua = (va * dm + 2 * mb * vb) / m
     let ub = (-vb * dm + 2 * ma * va) / m
 
-    vec.scale(a.vel, n, ua)
-    vec.scale(b.vel, n, -ub)
+    Vec.scale(a.vel, n, ua)
+    Vec.scale(b.vel, n, -ub)
   }
 
-  nonCentral(a: PhysProps, b: PhysProps, n?: vec.vec2) {
+  nonCentral(a: PhysProps, b: PhysProps, n?: Vec.vec2) {
     n = this._normalToCollisionLine(a, b, n)
     let ma = a.mass, mb = b.mass, m = ma + mb
     let v = a.vel
-    let dv = vec.subtract(this.dv, a.vel, b.vel)
-    let dn = vec.scale(this.dn, n, 2 * vec.dot(n, dv) * (mb / m))
-    vec.subtract(v, v, dn)
+    let dv = Vec.subtract(this.dv, a.vel, b.vel)
+    let dn = Vec.scale(this.dn, n, 2 * Vec.dot(n, dv) * (mb / m))
+    Vec.subtract(v, v, dn)
     v = b.vel
-    vec.neg(n, n)
-    vec.neg(dv, dv)
-    vec.subtract(v, v, vec.scale(dn, n, 2 * vec.dot(n, dv) * (ma / m)))
+    Vec.neg(n, n)
+    Vec.neg(dv, dv)
+    Vec.subtract(v, v, Vec.scale(dn, n, 2 * Vec.dot(n, dv) * (ma / m)))
   }
 }

@@ -1,6 +1,6 @@
 import * as chroma from 'chroma-js'
 import { filterViewCast } from 'commons/collections'
-import { int, toInt32 } from 'commons/types'
+import { int, toInt32 } from 'commons/prelude'
 import { dot } from 'gl-matrix/src/gl-matrix/quat'
 import * as brect from 'math/bbox'
 import { Random } from 'math/random'
@@ -58,25 +58,7 @@ const commonProps = {
 
 export class RepulsionScene extends SceneBase {
   constructor() {
-    super({
-      uiState: {
-        title: 'Repulsion Patterns',
-        actions: {
-          Stop: () => {
-          }
-        }
-      },
-      defaultProps: {
-        ...commonProps,
-        dots: [{ color: 'red' }, { color: 'black' }, { color: 'lightgray' }]
-      },
-      presetProps: {
-        'Two Sorts': {
-          ...commonProps,
-          dots: [{ color: 'red' }, { color: 'black' }]
-        }
-      }
-    })
+    super()
   }
   run() {
     let props: Props = this.ui.props as any

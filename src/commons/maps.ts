@@ -6,3 +6,7 @@ export function computeIfAbsent<K, V>(m: Map<K, V>, k: K, fn: (key: K) => V): V 
   m.set(k, v)
   return v
 }
+
+export function newStrMap<V>(obj: { [k: string]: V }): Map<string, V> {
+  return new Map(Object.entries(obj))
+}

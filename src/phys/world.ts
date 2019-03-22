@@ -1,4 +1,4 @@
-import { assert } from 'commons/error'
+import { assert } from 'commons/prelude'
 import { castMutable, int } from 'commons/prelude'
 import { Random } from 'math/random'
 import { vec2 } from 'math/vec2'

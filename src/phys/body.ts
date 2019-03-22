@@ -100,7 +100,7 @@ export class CoordMods {
   }
 
   static walls(b: PointMass, p: MoveParams) {
-    let pos = b.coords as vec2
+    let pos = b.coords
     let v = b.vel
     let x = pos[0]
     let y = pos[1]
@@ -112,7 +112,7 @@ export class CoordMods {
   }
 
   static modulo(b: PointMass, p: MoveParams) {
-    let pos = b.coords as vec2
+    let pos = b.coords
     let v = b.vel
     let w = p.w
     let h = p.h

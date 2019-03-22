@@ -1,6 +1,6 @@
 import * as chroma from 'chroma-js'
 import { isObjEmpty } from 'commons/collections'
-import { ExprEvaluator } from "commons/ExprEvaluator"
+import { ExprEvaluator } from "commons/exprEvaluator"
 import { Maybe, Undef, int, jsonStr, nonNull } from 'commons/prelude'
 import { Random } from "math/random"
 import * as RR from "math/random"
@@ -16,17 +16,23 @@ export abstract class SceneBase<P extends object = object> {
   readonly rngColor = new RandomColor(this.rng)
   _evalCtx = { rng: this.rng, rngColor: this.rngColor, chroma, Math, me: this }
   _eval = new ExprEvaluator(this._evalCtx)
-  _props: P
+  _props?: P
   frameCount: int = 0
+  config: SceneConfig<P>
   readonly ui: SceneUI
 
-  constructor(readonly config: SceneConfig<P>) {
-    this.ui = SceneUI.obj
+  constructor() {
+    this.ui = SceneUI._singleton
   }
 
   get props(): P {
     if (this._props) return this._props
     return (this._props = nonNull(this.ui.props) as P)
+  }
+
+  reloadProps(): P {
+    this._props = undefined
+    return this.props
   }
 
   evalProp<V>(propValue: V): V {
@@ -40,8 +46,15 @@ export abstract class SceneBase<P extends object = object> {
     return this._eval.eval(expr) as V
   }
 
-  stopOnFrame() {
+  stopAnimation() {
     (paper.view as any).onFrame = null
+  }
+
+  startAnimation() {
+    if (this.onFrame) {
+      (paper.view as any).onFrame = this.onFrame!!
+      paper.view.draw()
+    }
   }
 }
 
@@ -64,7 +77,7 @@ export interface SceneConfig<P = object> {
 }
 
 export function runScene(sc: SceneBase) {
-  SceneUI.obj.runScene(sc)
+  SceneUI._singleton.runScene(sc)
 }
 
 declare const JSONEditor: any
@@ -82,7 +95,7 @@ class SceneUI {
   _scene: SceneBase
   _canvas: HTMLCanvasElement
 
-  static get obj() {
+  static get _singleton() {
     return SceneUI._obj ? SceneUI._obj : (SceneUI._obj = new SceneUI())
   }
 
@@ -127,9 +140,7 @@ class SceneUI {
     if (scene.onStart) {
       scene.onStart()
     }
-    console.log(scene)
-    paper.view.onFrame = scene.onFrame!!
-    paper.view.draw()
+    scene.startAnimation()
   }
 
   _initCanvas(p: any) {

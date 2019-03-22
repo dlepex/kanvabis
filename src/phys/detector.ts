@@ -13,8 +13,8 @@ import { World } from './world'
 export class Proximity implements InterDetector {
   maxRadius?: number
   maxRadiusFn?: ((b: Body) => number)
-  private points: vec2[] = []
-  private indexMap: Map<int, Body> = new Map()
+  _points: vec2[] = []
+  _indexMap: Map<int, Body> = new Map()
   constructor(maxRadius: number | ((b: Body) => number),
     private bodies: Iterable<Body>,
     private srcBodies: Iterable<Body> = bodies
@@ -24,10 +24,10 @@ export class Proximity implements InterDetector {
   }
 
   forEach(interFn: InteractFn) {
-    let points = this.points
+    let points = this._points
     points.length = 0
 
-    let indexMap = this.indexMap
+    let indexMap = this._indexMap
 
     indexMap.clear()
     let idx = 0

@@ -1,5 +1,5 @@
 import { loggers } from 'commons/logger'
-import { newPerfTimer, newPerfTimerDisabled } from 'commons/perftimer'
+import { newPerfTimer, newPerfTimerDisabled } from 'commons/perfTimer'
 import * as Paper from 'draw/paperUtils'
 import * as brect from 'math/bbox'
 import { Random } from 'math/random'
